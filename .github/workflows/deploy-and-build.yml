@@ -1,4 +1,4 @@
-name: Safai Saathi CI, Release Build & Android APK
+name: Safai Saathi CI, Web & Android APK Deployment
 
 on:
   push:
@@ -13,44 +13,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build & Package App
+  build-and-deploy:
+    name: Build Web App & Android APK
     runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install Dependencies
-        run: |
-          npm --prefix apps/citizen_app install
-
-      - name: Build Production Web App / PWA
-        run: |
-          npm --prefix apps/citizen_app run build
-
-      - name: Upload Web & PWA Bundle Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: safai-saathi-pwa-bundle
-          path: apps/citizen_app/dist/
-
-      - name: Deploy to gh-pages branch
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: apps/citizen_app/dist
-          branch: gh-pages
-          clean: true
-
-  build-apk:
-    name: Build Android APK
-    runs-on: ubuntu-latest
-    needs: build
 
     steps:
       - name: Checkout Repository
@@ -72,9 +37,12 @@ jobs:
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      - name: Install Dependencies & Build Web Assets
+      - name: Install Dependencies
         run: |
           npm --prefix apps/citizen_app install
+
+      - name: Build Web App
+        run: |
           npm --prefix apps/citizen_app run build
 
       - name: Sync Capacitor Android
@@ -86,14 +54,36 @@ jobs:
         run: |
           chmod +x apps/citizen_app/android/gradlew
 
-      - name: Build Android Debug APK
+      - name: Build Android APK (Safai-Saathi.apk)
         run: |
           cd apps/citizen_app/android
           ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Copy APK to Web Dist for 1-Click Direct Download
+        run: |
+          cp apps/citizen_app/android/app/build/outputs/apk/debug/Safai-Saathi.apk apps/citizen_app/dist/Safai-Saathi.apk
+
+      - name: Deploy to GitHub Pages (gh-pages)
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: apps/citizen_app/dist
+          branch: gh-pages
+          clean: true
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: safai-saathi-android-apk
-          path: apps/citizen_app/android/app/build/outputs/apk/debug/*.apk
+          path: apps/citizen_app/android/app/build/outputs/apk/debug/Safai-Saathi.apk
           if-no-files-found: error
+
+      - name: Create or Update GitHub Release with Direct APK
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: v1.0.0
+          name: "Safai Saathi Android v1.0.0"
+          body: "Official Android APK build for Safai Saathi Citizen Sanitation Monitoring System (Panchmahal Godhra). Direct installable .apk."
+          files: apps/citizen_app/android/app/build/outputs/apk/debug/Safai-Saathi.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
