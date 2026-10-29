@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Safai Saathi - Complete Application Wireframe & System Architecture Specification</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+  
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm 15mm 15mm;
+    @bottom-right {
+      content: counter(page);
+    }
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #14201A;
+    background: #FFFFFF;
+    line-height: 1.5;
+    font-size: 11pt;
+  }
+
+  .page {
+    page-break-after: always;
+    min-height: 260mm;
+    position: relative;
+    padding-bottom: 20px;
+  }
+
+  .page:last-child {
+    page-break-after: avoid;
+  }
+
+  /* Header & Footer */
+  .doc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #087F78;
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+  }
+  .doc-header .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .doc-header .logo-badge {
+    background: #087F78;
+    color: white;
+    font-weight: 800;
+    font-size: 13pt;
+    padding: 4px 10px;
+    border-radius: 8px;
+  }
+  .doc-header .title-area h1 {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #087F78;
+  }
+  .doc-header .title-area p {
+    font-size: 8.5pt;
+    color: #566259;
+  }
+  .doc-header .meta-tag {
+    font-size: 8pt;
+    font-weight: 600;
+    color: #087F78;
+    background: #E8F8F0;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+  }
+
+  /* Section Titles */
+  .section-title {
+    font-size: 16pt;
+    font-weight: 800;
+    color: #14201A;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title span.badge {
+    font-size: 9pt;
+    font-weight: 700;
+    background: #F0873A;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+  .section-desc {
+    font-size: 9.5pt;
+    color: #566259;
+    margin-bottom: 16px;
+  }
+
+  /* Two-column Layout: Wireframe on left, Specs on right */
+  .screen-layout {
+    display: flex;
+    gap: 22px;
+    align-items: flex-start;
+  }
+
+  /* Mobile Wireframe Frame */
+  .phone-frame {
+    width: 270px;
+    height: 520px;
+    border: 8px solid #1E2D24;
+    border-radius: 36px;
+    background: #F3F6F2;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-notch {
+    width: 90px;
+    height: 14px;
+    background: #1E2D24;
+    border-radius: 0 0 10px 10px;
+    margin: 0 auto 4px auto;
+  }
+
+  /* Screen Spec Details */
+  .spec-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .spec-card {
+    background: #FAFCF9;
+    border: 1px solid #DCE5D9;
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .spec-card h3 {
+    font-size: 10.5pt;
+    font-weight: 700;
+    color: #087F78;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .spec-card p, .spec-card li {
+    font-size: 8.5pt;
+    color: #334E3F;
+    line-height: 1.45;
+  }
+  .spec-card ul {
+    padding-left: 16px;
+    margin-top: 4px;
+  }
+
+  /* UI Component Wireframe Elements */
+  .wf-pill-bar {
+    display: flex;
+    gap: 4px;
+    padding: 4px 8px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 20px;
+    margin: 4px 6px;
+    border: 1px solid #DCE5D9;
+  }
+  .wf-pill {
+    font-size: 6.5pt;
+    font-weight: 700;
+    padding: 3px 6px;
+    border-radius: 10px;
+    background: #E4F1DF;
+    color: #1B7A3F;
+  }
+  .wf-pill.active {
+    background: #111A14;
+    color: #FFFFFF;
+  }
+
+  .wf-map-bg {
+    flex: 1;
+    background: #E5EFE2;
+    position: relative;
+    overflow: hidden;
+    border: 1px dashed #B5CF8A;
+    margin: 4px 6px;
+    border-radius: 16px;
+  }
+  .wf-circle {
+    position: absolute;
+    border: 2px dashed #087F78;
+    background: rgba(8, 127, 120, 0.12);
+    border-radius: 50%;
+  }
+  .wf-van {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background: #087F78;
+    border: 2px solid white;
+    border-radius: 50%;
+    color: white;
+    font-size: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+
+  .wf-sheet {
+    background: white;
+    border-radius: 20px 20px 0 0;
+    padding: 10px;
+    border-top: 1px solid #DCE5D9;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.06);
+  }
+  .wf-contour-card {
+    background: #F3F6F2;
+    border: 1px solid #B5CF8A;
+    border-radius: 14px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+  }
+  .wf-contour-val {
+    font-size: 16pt;
+    font-weight: 800;
+    color: #14201A;
+  }
+  .wf-btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 7px 0;
+    border-radius: 20px;
+    font-size: 7.5pt;
+    font-weight: 700;
+    margin-top: 4px;
+    text-decoration: none;
+  }
+  .wf-btn-dark {
+    background: #111A14;
+    color: white;
+  }
+  .wf-btn-green {
+    background: #1B7A3F;
+    color: white;
+  }
+  .wf-btn-orange {
+    background: #FFEBD9;
+    color: #B34A0B;
+    border: 1px solid #F0873A;
+  }
+
+  /* Bottom Nav Wireframe */
+  .wf-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: white;
+    border: 1px solid #DCE5D9;
+    border-radius: 25px;
+    padding: 5px 8px;
+    margin: 6px 14px 10px 14px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+  }
+  .wf-nav-item {
+    font-size: 7pt;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 14px;
+    color: #566259;
+  }
+  .wf-nav-item.active {
+    background: #111A14;
+    color: white;
+  }
+  .wf-nav-lang {
+    background: #E4F1DF;
+    color: #1B7A3F;
+    border-radius: 12px;
+    padding: 4px 8px;
+    font-size: 6.5pt;
+    font-weight: 800;
+  }
+
+  /* Table styling */
+  table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+    margin-top: 4px;
+  }
+  table.data-table th, table.data-table td {
+    border: 1px solid #DCE5D9;
+    padding: 5px 8px;
+    text-align: left;
+  }
+  table.data-table th {
+    background: #E8F8F0;
+    color: #087F78;
+    font-weight: 700;
+  }
+
+  /* Color swatch boxes */
+  .palette {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0;
+  }
+  .swatch {
+    flex: 1;
+    height: 38px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 3px 5px;
+    font-size: 6.5pt;
+    font-weight: 700;
+    color: white;
+  }
+</style>
+</head>
+<body>
+
+  <!-- PAGE 1: COVER & SYSTEM ARCHITECTURE -->
+  <div class="page">
+    <div class="doc-header">
+      <div class="logo-area">
+        <div class="logo-badge">SS</div>
+        <div class="title-area">
+          <h1>Safai Saathi (સ્વચ્છતા સાથી)</h1>
+          <p>Panchmahal Godhra Citizen Sanitation Monitoring System (PS000051)</p>
+        </div>
+      </div>
+      <div class="meta-tag">UI/UX & Wireframe Blueprint</div>
+    </div>
+
+    <div style="background: linear-gradient(135deg, #087F78, #0A4421); color: white; padding: 24px; border-radius: 16px; margin-bottom: 20px;">
+      <span style="background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 12px; font-size: 8.5pt; font-weight: 700; text-transform: uppercase;">
+        Official Design System & Functional Wireframes
+      </span>
+      <h2 style="font-size: 20pt; font-weight: 800; margin: 8px 0 4px 0;">Panchmahal Citizen Sanitation Platform</h2>
+      <p style="font-size: 10pt; opacity: 0.9; max-width: 550px;">
+        Comprehensive UI specification covering real-time van telemetry, doorstep waste verification, anti-fraud camera grievance redressal, worker cross-verification loops, and 72-hour SLA auto-escalation.
+      </p>
+    </div>
+
+    <div class="spec-card" style="margin-bottom: 16px;">
+      <h3>🎨 Visual Design Tokens & Color Palette</h3>
+      <div class="palette">
+        <div class="swatch" style="background: #087F78;"><span>Deep Teal</span>#087F78</div>
+        <div class="swatch" style="background: #167B40;"><span>Forest Green</span>#167B40</div>
+        <div class="swatch" style="background: #F0873A;"><span>Civic Amber</span>#F0873A</div>
+        <div class="swatch" style="background: #E8F8F0; color: #087F78; border: 1px solid #B5CF8A;"><span>Surface Tint</span>#E8F8F0</div>
+        <div class="swatch" style="background: #111A14;"><span>Dark Carbon</span>#111A14</div>
+      </div>
+    </div>
+
+    <div class="spec-card">
+      <h3>🏛️ Ward Allocation & Micro-Sector Topology</h3>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Ward Cluster</th>
+            <th>Wards Covered</th>
+            <th>Assigned Vehicle</th>
+            <th>Radius</th>
+            <th>Baseline ETA</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>North Godhra (Commercial)</td>
+            <td>Ward 1 (Polan Bazar), Ward 2 (Station Rd), Ward 3 (Vavdi)</td>
+            <td>GJ-17-GA-1001 (Ashok Leyland Dost)</td>
+            <td>3.2 km</td>
+            <td>2 - 4 Mins</td>
+          </tr>
+          <tr>
+            <td>South Godhra (Residential)</td>
+            <td>Ward 4 (Bhuravav), Ward 5 (Jafrabad)</td>
+            <td>GJ-17-GA-1002 (Tata Ace Tipper)</td>
+            <td>3.5 km</td>
+            <td>3 - 6 Mins</td>
+          </tr>
+          <tr>
+            <td>Rural Panchayats</td>
+            <td>Tuwa & Bhamaiya Gram Panchayats</td>
+            <td>GJ-17-GA-1003 (Mahindra Bolero Maxi)</td>
+            <td>3.8 km</td>
+            <td>5 - 8 Mins</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="spec-card" style="margin-top: 14px;">
+      <h3>⚡ Core Workflow State Machine</h3>
+      <p>
+        Every grievance logged by a citizen traverses an immutable state machine:
+        <strong>RECEIVED (0h)</strong> &rarr; <strong>DISPATCHED TO WARD INSPECTOR</strong> &rarr; <strong>WORKER CLEANED (Photo Upload)</strong> &rarr; <strong>CITIZEN CROSS-VERIFY (24h Window)</strong> &rarr; <strong>RESOLVED / REOPENED</strong>.
+        If an issue remains untouched past 24h or 72h, it triggers automated administrative escalation to the Godhra Chief Officer and District Development Officer (DDO).
+      </p>
+    </div>
+  </div>
+
+  <!-- PAGE 2: SCREEN 1 - MAP & ETA TELEMETRY -->
+  <div class="page">
+    <div class="doc-header">
+      <div class="logo-area"><div class="logo-badge">SS</div><div class="title-area"><h1>Screen 1: Live Telemetry & Sector ETA</h1></div></div>
+      <div class="meta-tag">Map & Van Tracking</div>
+    </div>
+
+    <div class="screen-layout">
+      <!-- Phone Wireframe -->
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        
+        <!-- Top Ward Selector Pill Bar -->
+        <div class="wf-pill-bar">
+          <div style="width: 18px; height: 18px; border-radius: 50%; background: #087F78; color: white; font-size: 7pt; display: flex; align-items: center; justify-content: center; font-weight: 800;">SS</div>
+          <div class="wf-pill active">Ward 1 - Polan Bazar ●</div>
+          <div class="wf-pill">Ward 2</div>
+          <div class="wf-pill">Ward 3</div>
+        </div>
+
+        <!-- GIS Map Body with Ward Sector & Moving Van -->
+        <div class="wf-map-bg">
+          <div class="wf-circle" style="width: 140px; height: 140px; top: 30px; left: 40px;"></div>
+          <div style="position: absolute; top: 38px; left: 55px; font-size: 6pt; font-weight: 700; color: #087F78;">3.2 km Sector Circle</div>
+          
+          <div class="wf-van" style="top: 85px; left: 95px;">🚐</div>
+          <div style="position: absolute; top: 110px; left: 80px; font-size: 6pt; font-weight: 800; background: white; padding: 1px 4px; border-radius: 4px; border: 1px solid #DCE5D9;">
+            GJ-17-GA-1001 (3 min)
+          </div>
+
+          <!-- Floating Map Action Buttons -->
+          <div style="position: absolute; right: 8px; bottom: 12px; display: flex; flex-direction: column; gap: 4px;">
+            <div style="width: 26px; height: 26px; border-radius: 50%; background: white; border: 1px solid #DCE5D9; display: flex; align-items: center; justify-content: center; font-size: 10px;">⛶</div>
+            <div style="width: 26px; height: 26px; border-radius: 50%; background: white; border: 1px solid #DCE5D9; display: flex; align-items: center; justify-content: center; font-size: 10px;">🎯</div>
+          </div>
+        </div>
+
+        <!-- Contour Bottom Sheet for Arrival ETA -->
+        <div class="wf-sheet">
+          <div style="width: 30px; height: 3px; background: #B5CF8A; border-radius: 2px; margin: 0 auto 6px auto;"></div>
+          <div class="wf-contour-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 6.5pt; font-weight: 700; color: #566259; text-transform: uppercase;">Estimated Arrival</span>
+              <span style="font-size: 6pt; font-weight: 700; background: #087F78; color: white; padding: 1px 5px; border-radius: 8px;">GJ-17-GA-1001</span>
+            </div>
+            <div class="wf-contour-val">3 <span style="font-size: 9pt; font-weight: 600;">Minutes</span></div>
+            <div style="font-size: 6.5pt; color: #566259;">Ramesh Parmar • Polan Bazar Loop</div>
+          </div>
+
+          <a href="#" class="wf-btn wf-btn-orange">⚠️ Van Did Not Arrive (Report Missed)</a>
+        </div>
+
+        <!-- Bottom Navigation Pill -->
+        <div class="wf-nav">
+          <div class="wf-nav-item active">🗺️</div>
+          <div class="wf-nav-item">📋</div>
+          <div class="wf-nav-item">⚙️</div>
+          <div class="wf-nav-lang">EN/ગુજ</div>
+        </div>
+      </div>
+
+      <!-- Specs Column -->
+      <div class="spec-column">
+        <div class="spec-card">
+          <h3>📌 Screen Specifications</h3>
+          <ul>
+            <li><strong>Unobstructed Ward Bar:</strong> Placed at top-4 with official app icon and horizontal scroll for Wards 1 to 7.</li>
+            <li><strong>Realistic Ward-Cluster ETA:</strong> Vehicles are allotted 2–3 ward sectors with tight 2.5–3.8 km loops, providing accurate 2–8 minute ETAs.</li>
+            <li><strong>Dynamic Collection Dismissal:</strong> Once citizen confirms collection, the arrival ETA card completely disappears and is replaced by "Collection Done Today".</li>
+            <li><strong>Global Language Switcher:</strong> Placed in the fixed bottom navigation pill; accessible across all tabs without hiding text.</li>
+          </ul>
+        </div>
+
+        <div class="spec-card">
+          <h3>🔔 Van 500m Arrival Siren</h3>
+          <p>
+            When a waste collection vehicle enters the 500-meter radius threshold of the citizen's sector, the app fires an audio chime and triggers an in-app alert urging residents to bring segregated wet/dry bins to the doorstep.
+          </p>
+        </div>
+
+        <div class="spec-card">
+          <h3>⚡ User Actions Available</h3>
+          <ul>
+            <li>Tap any Ward pill to instantly pan the camera and view that ward's active vehicle telemetry.</li>
+            <li>Tap "Van Did Not Arrive" to log an automated missed collection ticket.</li>
+            <li>Tap Spark icon to open the Post-Collection verification sheet.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 3: SCREEN 2 - DOORSTEP COLLECTION & VERIFICATION -->
+  <div class="page">
+    <div class="doc-header">
+      <div class="logo-area"><div class="logo-badge">SS</div><div class="title-area"><h1>Screen 2: Collection Verification & ETA Dismissal</h1></div></div>
+      <div class="meta-tag">Feedback & Audit</div>
+    </div>
+
+    <div class="screen-layout">
+      <!-- Phone Wireframe -->
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        
+        <!-- Map Background Behind Modal -->
+        <div style="flex: 1; background: #C8D6C5; opacity: 0.5; position: relative;"></div>
+
+        <!-- Post Collection Modal Overlay -->
+        <div style="background: white; border-radius: 24px 24px 0 0; padding: 14px; box-shadow: 0 -8px 20px rgba(0,0,0,0.15);">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #DCE5D9; padding-bottom: 6px; margin-bottom: 8px;">
+            <span style="font-size: 8pt; font-weight: 800; color: #14201A;">Did Van Collect Waste Today?</span>
+            <span style="font-size: 8pt; color: #74897A;">✕</span>
+          </div>
+          
+          <div style="font-size: 7pt; color: #566259; margin-bottom: 10px;">
+            Your feedback directly scores the municipal contractor's daily performance.
+          </div>
+
+          <!-- Option 1: Yes Collected -->
+          <div style="background: #E8F8F0; border: 1.5px solid #1B7A3F; border-radius: 12px; padding: 8px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 14px;">✅</span>
+              <div>
+                <div style="font-size: 7.5pt; font-weight: 800; color: #1B7A3F;">Yes, Waste Collected</div>
+                <div style="font-size: 6pt; color: #334E3F;">Van arrived at doorstep on time</div>
+              </div>
+            </div>
+            <div style="width: 14px; height: 14px; border-radius: 50%; background: #1B7A3F; color: white; font-size: 8px; display: flex; align-items: center; justify-content: center;">✓</div>
+          </div>
+
+          <!-- Option 2: Missed -->
+          <div style="background: #FFF5EE; border: 1px solid #F0873A; border-radius: 12px; padding: 8px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 14px;">⚠️</span>
+            <div>
+              <div style="font-size: 7.5pt; font-weight: 700; color: #B34A0B;">No, Van Missed My House</div>
+              <div style="font-size: 6pt; color: #74897A;">Driver skipped street or bin full</div>
+            </div>
+          </div>
+
+          <!-- Option 3: No Waste -->
+          <div style="background: #F3F6F2; border: 1px solid #DCE5D9; border-radius: 12px; padding: 8px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 14px;">⚪</span>
+            <div>
+              <div style="font-size: 7.5pt; font-weight: 700; color: #566259;">No Waste Generated Today</div>
+              <div style="font-size: 6pt; color: #74897A;">Premises closed or self-composted</div>
+            </div>
+          </div>
+
+          <a href="#" class="wf-btn wf-btn-dark">Submit Citizen Verification</a>
+        </div>
+      </div>
+
+      <!-- Specs Column -->
+      <div class="spec-column">
+        <div class="spec-card">
+          <h3>📊 ETA Disappearance Logic</h3>
+          <p>
+            When a citizen selects <strong>"Yes, Waste Collected"</strong>:
+          </p>
+          <ul>
+            <li>The system records an entry in <code>CitizenCollectionFeedback</code> with timestamp and ward ID.</li>
+            <li>The floating bottom sheet immediately <strong>hides the ETA arrival card</strong>.</li>
+            <li>Replaced with a green status card: <code>✅ આજનો કચરો કલેક્ટ થઈ ગયો છે! (Today's Collection Complete)</code>.</li>
+            <li>Includes an "Undo / Change" action in case the user wants to revert status.</li>
+          </ul>
+        </div>
+
+        <div class="spec-card">
+          <h3>🎯 Anti-Gaming Contractor Audit</h3>
+          <p>
+            If 5 or more households in a 300m radius report "Missed by Van" within a 2-hour window, the system automatically triggers a contractor penalty alert on the Nagarpalika sanitation dashboard.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 4: SCREEN 3 - LIVE CAMERA GRIEVANCE & OTP -->
+  <div class="page">
+    <div class="doc-header">
+      <div class="logo-area"><div class="logo-badge">SS</div><div class="title-area"><h1>Screen 3: Live Camera Grievance & OTP Verification</h1></div></div>
+      <div class="meta-tag">Grievance Registration</div>
+    </div>
+
+    <div class="screen-layout">
+      <!-- Phone Wireframe -->
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        
+        <div style="padding: 10px; flex: 1; display: flex; flex-direction: column; gap: 6px;">
+          <!-- Sheet Header -->
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #DCE5D9; padding-bottom: 4px;">
+            <span style="font-size: 8pt; font-weight: 800;">Report Sanitation Problem</span>
+            <span style="font-size: 8pt;">✕</span>
+          </div>
+
+          <!-- Category Selector -->
+          <div style="font-size: 6.5pt; font-weight: 700; color: #14201A; text-transform: uppercase;">1. Select Category *</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+            <div style="background: #F0873A; color: white; padding: 4px 6px; border-radius: 8px; font-size: 6pt; font-weight: 800;">🗑️ Garbage Dump ✓</div>
+            <div style="background: #F3F6F2; padding: 4px 6px; border-radius: 8px; font-size: 6pt; font-weight: 600;">🌊 Open Gutter</div>
+            <div style="background: #F3F6F2; padding: 4px 6px; border-radius: 8px; font-size: 6pt; font-weight: 600;">📦 Overflowing Bin</div>
+            <div style="background: #F3F6F2; padding: 4px 6px; border-radius: 8px; font-size: 6pt; font-weight: 600;">➕ Other Issue</div>
+          </div>
+
+          <!-- Address Input -->
+          <div style="font-size: 6.5pt; font-weight: 700; color: #14201A; text-transform: uppercase; margin-top: 2px;">2. Street / Area *</div>
+          <div style="background: white; border: 1px solid #74897A; border-radius: 8px; padding: 4px 8px; font-size: 6.5pt;">
+            Near Polan Bazar Masjid, Godhra
+          </div>
+
+          <!-- Live Camera Viewfinder -->
+          <div style="font-size: 6.5pt; font-weight: 700; color: #14201A; text-transform: uppercase; margin-top: 2px;">3. Live Camera Photo *</div>
+          <div style="background: #1E2D24; border-radius: 10px; height: 110px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding: 6px;">
+            <div style="position: absolute; top: 6px; left: 6px; background: rgba(0,0,0,0.6); color: white; padding: 2px 5px; border-radius: 4px; font-size: 5.5pt;">
+              📸 Live GPS Camera (Gallery Disabled)
+            </div>
+            <div style="background: rgba(0,0,0,0.7); color: #A8E5CB; padding: 3px 6px; border-radius: 6px; font-size: 5pt; line-height: 1.2;">
+              LAT: 22.7758° N • LNG: 73.6149° E<br/>
+              TIME: 2026-10-29 17:30:14 IST • ANTI-TAMPER SEAL
+            </div>
+          </div>
+
+          <!-- Mandatory OTP Callout -->
+          <div style="background: #E8F8F0; border: 1px solid #B5CF8A; border-radius: 8px; padding: 5px 8px; font-size: 6pt; color: #1B7A3F;">
+            🔒 <strong>Fresh OTP Required:</strong> Phone is verified per submission and never saved locally.
+          </div>
+
+          <a href="#" class="wf-btn wf-btn-dark" style="margin-top: auto;">Submit Grievance</a>
+        </div>
+      </div>
+
+      <!-- Specs Column -->
+      <div class="spec-column">
+        <div class="spec-card">
+          <h3>🛡️ Anti-Fraud Live Viewfinder</h3>
+          <ul>
+            <li><strong>HTML5 MediaStream API:</strong> Gallery file upload is strictly disabled. Photos can only be captured in real-time through the live camera lens.</li>
+            <li><strong>Cryptographic GPS Watermark:</strong> Upon snap, live coordinates, accuracy radius, and timestamp are burnt into the canvas.</li>
+            <li><strong>Geofence Validation:</strong> Coordinates must fall within the bounds of Panchmahal District.</li>
+          </ul>
+        </div>
+
+        <div class="spec-card">
+          <h3>📱 Zero-Persistence OTP Verification</h3>
+          <ul>
+            <li>Prompted on <strong>every single submission</strong>.</li>
+            <li>Phone number field resets to empty on open; strictly forbidden from writing to <code>localStorage</code>.</li>
+            <li>Demo OTP <code>123456</code> enabled for rapid evaluation without telecom gateway delays.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 5: SCREEN 4 - WORKER CLEANUP & CITIZEN CROSS-VERIFY -->
+  <div class="page">
+    <div class="doc-header">
+      <div class="logo-area"><div class="logo-badge">SS</div><div class="title-area"><h1>Screen 4: Worker Cleanup & Citizen Cross-Verification</h1></div></div>
+      <div class="meta-tag">Accountability Loop</div>
+    </div>
+
+    <div class="screen-layout">
+      <!-- Phone Wireframe -->
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        
+        <div style="padding: 10px; flex: 1; display: flex; flex-direction: column; gap: 6px; overflow-y: auto;">
+          <!-- Detail Header -->
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 6.5pt; font-family: monospace; font-weight: 800; background: #E4F1DF; color: #1B7A3F; padding: 2px 6px; border-radius: 8px;">
+              #PMH-2024-8192
+            </span>
+            <span style="font-size: 6pt; font-weight: 700; background: #F5EEFF; color: #9333EA; padding: 2px 6px; border-radius: 8px;">
+              VERIFICATION PENDING
+            </span>
+          </div>
+
+          <!-- Worker Cleaning Proof Photo -->
+          <div style="background: #F5EEFF; border: 1.5px solid #9333EA; border-radius: 12px; padding: 8px;">
+            <div style="font-size: 7pt; font-weight: 800; color: #6B21A8; margin-bottom: 4px;">
+              🔔 Sanitation Crew Cleaned Spot!
+            </div>
+            <div style="background: #2A163B; border-radius: 8px; height: 95px; position: relative; overflow: hidden; display: flex; align-items: flex-end; padding: 4px;">
+              <div style="background: rgba(0,0,0,0.7); color: white; padding: 2px 5px; border-radius: 4px; font-size: 5pt; width: 100%;">
+                Worker: Kishore Solanki (Crew #14) • 17:45 IST
+              </div>
+            </div>
+            <div style="font-size: 6pt; color: #566259; margin-top: 3px;">
+              "Heap removed and corner disinfected with lime powder."
+            </div>
+          </div>
+
+          <!-- Citizen Cross Verification CTA -->
+          <div style="background: white; border: 1px solid #DCE5D9; border-radius: 12px; padding: 8px;">
+            <div style="font-size: 7pt; font-weight: 800; color: #14201A; margin-bottom: 2px;">
+              Citizen Verification Required *
+            </div>
+            <div style="font-size: 6pt; color: #566259; margin-bottom: 6px;">
+              Please inspect the area and provide live camera verification:
+            </div>
+
+            <div style="display: flex; gap: 4px;">
+              <a href="#" class="wf-btn wf-btn-green" style="flex: 1; font-size: 6.5pt;">✅ Yes, Cleaned</a>
+              <a href="#" class="wf-btn wf-btn-orange" style="flex: 1; font-size: 6.5pt;">❌ No, Still Dirty</a>
+            </div>
+          </div>
+
+          <!-- 24h Auto Resolve Timer -->
+          <div style="background: #F3F6F2; border-radius: 8px; padding: 6px; font-size: 5.5pt; color: #566259; text-align: center;">
+            ⏱️ <strong>24h Auto-Resolve Window:</strong> Ticket automatically marks resolved if citizen does not respond within 24h. Citizen retains reopen rights.
+          </div>
+        </div>
+      </div>
+
+      <!-- Specs Column -->
+      <div class="spec-column">
+        <div class="spec-card">
+          <h3>🔄 The 2-Way Verification Loop</h3>
+          <p>
+            Traditional grievance systems allow municipal workers to unilaterally close tickets. Safai Saathi enforces a strict two-way cross-verification:
+          </p>
+          <ul>
+            <li><strong>Worker Stage:</strong> Sanitation worker marks spot cleaned and uploads after-photo proof. Ticket enters <code>pending_verification</code>.</li>
+            <li><strong>Citizen Stage:</strong> The citizen who raised the complaint is prompted to inspect the spot.</li>
+            <li><strong>Proof for Both Responses:</strong> If citizen confirms "Cleaned", they upload confirmation proof. If they dispute "Still Dirty", they upload evidence of remaining filth.</li>
+          </ul>
+        </div>
+
+        <div class="spec-card">
+          <h3>⏳ 24-Hour Failsafe & Reopen Rights</h3>
+          <p>
+            If a citizen does not inspect within 24 hours, the system transitions the ticket to <code>auto_resolved</code> to avoid blocking administrative KPIs. However, the citizen retains the right to click <strong>"Reopen Grievance"</strong> with fresh photo evidence at any time.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 6: SCREEN 5 - 24H & 72H SLA AUTO-ESCALATION -->
+  <div class="page">
+    <div class="doc-header">
+      <div class="logo-area"><div class="logo-badge">SS</div><div class="title-area"><h1>Screen 5: SLA Monitoring & Auto-Escalation Engine</h1></div></div>
+      <div class="meta-tag">Administrative Governance</div>
+    </div>
+
+    <div class="screen-layout">
+      <!-- Phone Wireframe -->
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        
+        <div style="padding: 10px; flex: 1; display: flex; flex-direction: column; gap: 6px;">
+          <!-- Ticket Header -->
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 6.5pt; font-family: monospace; font-weight: 800; background: #FFEBD9; color: #B34A0B; padding: 2px 6px; border-radius: 8px;">
+              #PMH-2024-4109
+            </span>
+            <span style="font-size: 6pt; font-weight: 800; background: #B3261E; color: white; padding: 2px 6px; border-radius: 8px;">
+              72h SLA BREACHED
+            </span>
+          </div>
+
+          <!-- Escalation Banner -->
+          <div style="background: #FFF1F0; border: 1.5px solid #B3261E; border-radius: 12px; padding: 8px;">
+            <div style="font-size: 7pt; font-weight: 800; color: #B3261E; margin-bottom: 2px;">
+              🚨 Escalated to District Collector & DDO
+            </div>
+            <div style="font-size: 6pt; color: #781510; line-height: 1.3;">
+              This grievance has remained unresolved for over 72 hours. Administrative oversight initiated.
+            </div>
+          </div>
+
+          <!-- Direct Authority Contact Cards -->
+          <div style="font-size: 6.5pt; font-weight: 800; color: #14201A; text-transform: uppercase; margin-top: 2px;">
+            Direct Authority Redressal
+          </div>
+
+          <!-- 1. DDO -->
+          <div style="background: white; border: 1px solid #DCE5D9; border-radius: 10px; padding: 6px 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 7pt; font-weight: 800; color: #14201A;">District Development Officer (DDO)</div>
+              <div style="font-size: 5.5pt; color: #566259;">Panchmahal Collectorate • 02672-242001</div>
+            </div>
+            <div style="background: #1B7A3F; color: white; padding: 3px 8px; border-radius: 12px; font-size: 6pt; font-weight: 700;">CALL</div>
+          </div>
+
+          <!-- 2. Chief Officer -->
+          <div style="background: white; border: 1px solid #DCE5D9; border-radius: 10px; padding: 6px 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 7pt; font-weight: 800; color: #14201A;">Chief Officer (Godhra Municipality)</div>
+              <div style="font-size: 5.5pt; color: #566259;">Nagarpalika Bhavan • 98251 00000</div>
+            </div>
+            <div style="background: #1B7A3F; color: white; padding: 3px 8px; border-radius: 12px; font-size: 6pt; font-weight: 700;">CALL</div>
+          </div>
+
+          <!-- 3. Ward Inspector -->
+          <div style="background: white; border: 1px solid #DCE5D9; border-radius: 10px; padding: 6px 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 7pt; font-weight: 800; color: #14201A;">Ward 1 Sanitation Inspector</div>
+              <div style="font-size: 5.5pt; color: #566259;">Haresh Patel • 98251 00001</div>
+            </div>
+            <div style="background: #1B7A3F; color: white; padding: 3px 8px; border-radius: 12px; font-size: 6pt; font-weight: 700;">CALL</div>
+          </div>
+
+          <a href="#" class="wf-btn wf-btn-dark" style="margin-top: auto;">Download Official Audit Receipt</a>
+        </div>
+      </div>
+
+      <!-- Specs Column -->
+      <div class="spec-column">
+        <div class="spec-card">
+          <h3>⏱️ SLA Tier Escalation Matrix</h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Elapsed Time</th>
+                <th>Status</th>
+                <th>Responsible Officer</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>0 - 24 Hours</td>
+                <td>Standard SLA</td>
+                <td>Ward Sanitation Inspector</td>
+              </tr>
+              <tr>
+                <td>24 - 48 Hours</td>
+                <td>Level 1 Escalation</td>
+                <td>Chief Officer (Godhra Municipality)</td>
+              </tr>
+              <tr>
+                <td>48 - 72 Hours</td>
+                <td>Level 2 Escalation</td>
+                <td>Executive Engineer & Sanitation Head</td>
+              </tr>
+              <tr>
+                <td>&gt; 72 Hours</td>
+                <td>Critical Breach</td>
+                <td>District Development Officer (DDO)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="spec-card">
+          <h3>📞 Transparent One-Tap Redressal</h3>
+          <p>
+            When an SLA is breached, citizens are not left in the dark. The app immediately displays official government contact numbers and provides direct calling integration, creating complete transparency and executive accountability.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
