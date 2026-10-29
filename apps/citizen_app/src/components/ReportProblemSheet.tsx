@@ -3,12 +3,10 @@ import { Camera, X, Check, AlertCircle, Send, ShieldCheck, FileText, MapPinned }
 import { ComplaintCategory, Complaint } from '../types';
 import { Language, translations } from '../core/localization';
 import { CameraModal } from './CameraModal';
-import { OtpModal, VerificationMode } from './OtpModal';
-import { TicketDispatchedModal } from './TicketDispatchedModal';
-import { WhatsAppChatSimulationModal } from './WhatsAppChatSimulationModal';
+import { OtpModal } from './OtpModal';
+import { ComplaintSuccessModal } from './ComplaintSuccessModal';
 import { LocationCoords, GeoService } from '../services/simulationService';
 import { StorageService } from '../services/storageService';
-import { WhatsAppDispatchService, WhatsAppDispatchResult } from '../services/whatsappDispatchService';
 import { SEED_WARDS } from '../core/seedData';
 import confetti from 'canvas-confetti';
 
@@ -18,6 +16,7 @@ interface ReportProblemSheetProps {
   wardId: string;
   lang: Language;
   onComplaintCreated: (complaint: Complaint) => void;
+  onViewComplaints?: () => void;
 }
 
 export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
@@ -26,6 +25,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
   wardId,
   lang,
   onComplaintCreated,
+  onViewComplaints,
 }) => {
   const t = translations[lang];
 
@@ -39,9 +39,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isOtpOpen, setIsOtpOpen] = useState(false);
   const [createdComplaint, setCreatedComplaint] = useState<Complaint | null>(null);
-  const [dispatchResult, setDispatchResult] = useState<WhatsAppDispatchResult | null>(null);
-  const [isDispatchedOpen, setIsDispatchedOpen] = useState(false);
-  const [isWhatsAppSimOpen, setIsWhatsAppSimOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -71,12 +69,12 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
       return;
     }
 
-    // STRICT REQUIREMENT: Always prompt for OTP verification every single time!
+    // STRICT REQUIREMENT: Always prompt for OTP verification on every submission!
     // Never bypass OTP, never remember phone number from previous submissions.
     setIsOtpOpen(true);
   };
 
-  const executeSubmission = async (phone: string, mode: VerificationMode) => {
+  const executeSubmission = (phone: string) => {
     setIsSubmitting(true);
     setError(null);
 
@@ -118,20 +116,11 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
       particleCount: 80,
       spread: 60,
       origin: { y: 0.7 },
-      colors: ['#087F78', '#1B7A3F', '#F5B544', '#A8E5CB'],
+      colors: ['#167B40', '#1B7A3F', '#F0873A', '#7CAE7A'],
     });
 
     setIsSubmitting(false);
-
-    if (mode === 'demo') {
-      // Demo Mode: Open authentic WhatsApp chat simulation
-      setIsWhatsAppSimOpen(true);
-    } else {
-      // Live API Mode: Dispatch via WhatsApp gateway service
-      const result = await WhatsAppDispatchService.dispatchTicketToWhatsApp(newComplaint);
-      setDispatchResult(result);
-      setIsDispatchedOpen(true);
-    }
+    setIsSuccessModalOpen(true);
   };
 
   return (
@@ -321,29 +310,24 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
       <OtpModal
         isOpen={isOtpOpen}
         onClose={() => setIsOtpOpen(false)}
-        onVerified={(phone, mode) => executeSubmission(phone, mode)}
+        onVerified={phone => executeSubmission(phone)}
         lang={lang}
       />
 
-      {/* Authentic WhatsApp Chat Simulation Modal (Demo Mode) */}
-      <WhatsAppChatSimulationModal
-        isOpen={isWhatsAppSimOpen}
+      {/* Official In-App Complaint Success Modal */}
+      <ComplaintSuccessModal
+        isOpen={isSuccessModalOpen}
         complaint={createdComplaint}
         onClose={() => {
-          setIsWhatsAppSimOpen(false);
+          setIsSuccessModalOpen(false);
           onClose();
         }}
-        lang={lang}
-      />
-
-      {/* Direct Ticket Dispatched Confirmation Modal (Live API Mode) */}
-      <TicketDispatchedModal
-        isOpen={isDispatchedOpen}
-        complaint={createdComplaint}
-        dispatchResult={dispatchResult}
-        onClose={() => {
-          setIsDispatchedOpen(false);
+        onViewComplaints={() => {
+          setIsSuccessModalOpen(false);
           onClose();
+          if (onViewComplaints) {
+            onViewComplaints();
+          }
         }}
         lang={lang}
       />

@@ -272,6 +272,10 @@ export const App: React.FC = () => {
         wardId={wardId}
         lang={lang}
         onComplaintCreated={handleComplaintCreated}
+        onViewComplaints={() => {
+          setIsReportOpen(false);
+          setCurrentTab('complaints');
+        }}
       />
 
       {/* Post-Collection Verification Modal ("Did you add garbage?") */}
