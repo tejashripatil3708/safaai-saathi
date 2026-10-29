@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #111A14;
+  --color-brand: #1B7A3F;
+  --color-accent: #F0873A;
+  --color-bg: #F3F6F2;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #F3F6F2;
+  color: #14201A;
+  font-family: 'Noto Sans', 'Noto Sans Gujarati', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Leaflet overrides */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  background-color: #E9F1E6;
+}
+
+.custom-van-marker,
+.custom-user-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Hide scrollbars for clean mobile feel */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

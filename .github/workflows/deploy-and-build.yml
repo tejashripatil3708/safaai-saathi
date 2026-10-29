@@ -1,0 +1,41 @@
+name: Safai Saathi CI & Release Build
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build & Package App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'apps/citizen_app/package-lock.json'
+
+      - name: Install Dependencies
+        run: |
+          npm --prefix apps/citizen_app install
+
+      - name: Build Production Web App / PWA
+        run: |
+          npm --prefix apps/citizen_app run build
+
+      - name: Upload Web & PWA Bundle Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: safai-saathi-pwa-bundle
+          path: apps/citizen_app/dist/

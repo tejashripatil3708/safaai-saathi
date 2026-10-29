@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isStaff() {
+      return isAuthenticated() && request.auth.token.role in ['inspector', 'chief_officer', 'tdo', 'ddo'];
+    }
+    
+    function isDriverForVan(vanId) {
+      return isAuthenticated() && request.auth.token.vanId == vanId;
+    }
+
+    // 1. Wards & Routes: Publicly readable by all citizens
+    match /wards/{wardId} {
+      allow read: if true;
+      allow write: if isStaff() && request.auth.token.role in ['chief_officer', 'tdo', 'ddo'];
+    }
+
+    match /routes/{routeId} {
+      allow read: if true;
+      allow write: if isStaff() && request.auth.token.role in ['chief_officer', 'tdo', 'ddo'];
+    }
+
+    // 2. Vans: Citizens can read public tracking fields; only verified driver writes
+    match /vans/{vanId} {
+      allow read: if true;
+      allow update: if isDriverForVan(vanId) 
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['lastLocation', 'status', 'batteryPct', 'currentTripId']);
+      allow write: if isStaff();
+    }
+
+    // 3. VanSecrets: Never readable or writable by any client app (Admin / Cloud Functions only)
+    match /vanSecrets/{vanId} {
+      allow read, write: if false;
+    }
+
+    // 4. Trips: Created and updated during driver shifts
+    match /trips/{tripId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (
+        request.auth.token.vanId == request.resource.data.vanId || isStaff()
+      );
+    }
+
+    // 5. Complaints: Anonymous or authenticated citizens can create and read their own
+    match /complaints/{complaintId} {
+      allow read: if isStaff() || (
+        isAuthenticated() && resource.data.deviceId == request.auth.uid
+      );
+      
+      // Citizens can create new complaints
+      allow create: if isAuthenticated()
+        && request.resource.data.category in ['garbage_dump', 'open_gutter', 'missed_collection', 'other']
+        && request.resource.data.status == 'received'
+        && request.resource.data.escalationLevel == 0
+        && request.resource.data.deviceId == request.auth.uid;
+        
+      // Only staff can update status, assignment, and escalation
+      allow update: if isStaff();
+      allow delete: if false;
+    }
+
+    // 6. Ratings: Citizens can submit daily rating for their ward
+    match /ratings/{ratingId} {
+      allow read: if isStaff();
+      allow create: if isAuthenticated() && request.resource.data.stars >= 1 && request.resource.data.stars <= 5;
+    }
+
+    // 7. Notices & Staff: Managed by administrative authorities
+    match /notices/{noticeId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    match /staff/{staffId} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff() && request.auth.token.role == 'ddo';
+    }
+  }
+}
