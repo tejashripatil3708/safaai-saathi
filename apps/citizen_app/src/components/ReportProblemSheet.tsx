@@ -4,7 +4,7 @@ import { ComplaintCategory, Complaint } from '../types';
 import { Language, translations } from '../core/localization';
 import { CameraModal } from './CameraModal';
 import { OtpModal } from './OtpModal';
-import { WhatsAppDispatchModal } from './WhatsAppDispatchModal';
+import { WhatsAppDispatchModal, generateBilingualWhatsAppMessage } from './WhatsAppDispatchModal';
 import { LocationCoords, GeoService } from '../services/simulationService';
 import { StorageService } from '../services/storageService';
 import { SEED_WARDS } from '../core/seedData';
@@ -123,9 +123,18 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
         colors: ['#1B7A3F', '#6DB36F', '#F0873A', '#B5CF8A'],
       });
 
+      // Automatically launch WhatsApp with the bilingual ticket
+      try {
+        const waMsg = generateBilingualWhatsAppMessage(newComplaint);
+        const waUrl = `https://wa.me/?text=${encodeURIComponent(waMsg)}`;
+        window.open(waUrl, '_blank');
+      } catch (_e) {
+        // Fallback handled by WhatsAppDispatchModal
+      }
+
       // Prompt opening WhatsApp ticket immediately
       setIsWhatsAppOpen(true);
-    }, 600);
+    }, 400);
   };
 
   return (
