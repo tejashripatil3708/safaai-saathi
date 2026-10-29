@@ -6,7 +6,6 @@ import { CivicHabitTips } from './CivicHabitTips';
 import { GeoService, LocationCoords } from '../services/simulationService';
 import { CONSTANTS } from '../core/constants';
 import {
-  Camera,
   AlertOctagon,
   LocateFixed,
   Maximize2,
@@ -22,7 +21,6 @@ interface MapShellProps {
   vans: Van[];
   userLocation: LocationCoords | null;
   lang: Language;
-  onOpenReport: () => void;
   onReportMissedVan: () => void;
   hasReportedMissed: boolean;
   onOpenPostCollection: () => void;
@@ -33,7 +31,6 @@ export const MapShell: React.FC<MapShellProps> = ({
   vans,
   userLocation,
   lang,
-  onOpenReport,
   onReportMissedVan,
   hasReportedMissed,
   onOpenPostCollection,
@@ -44,6 +41,7 @@ export const MapShell: React.FC<MapShellProps> = ({
   const vanMarkerRef = useRef<L.Marker | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
   const wardCircleRef = useRef<L.Circle | null>(null);
+  const wardLabelRef = useRef<L.Marker | null>(null);
 
   // Fullscreen map mode state per user requirement
   const [isFullscreenMap, setIsFullscreenMap] = useState(false);
@@ -92,8 +90,43 @@ export const MapShell: React.FC<MapShellProps> = ({
       fillOpacity: 0.12,
     }).addTo(map);
 
+    // Draw / update ward label marker
+    if (wardLabelRef.current) {
+      wardLabelRef.current.remove();
+    }
+    const wardDisplayName = lang === 'gu' ? ward.nameGu : ward.name;
+    const shortName = wardDisplayName.split(' - ')[0]; // e.g. "Ward 1" or "વોર્ડ ૧"
+    const wardLabelHtml = `
+      <div style="
+        background: rgba(27,122,63,0.92);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 9px;
+        border-radius: 20px;
+        white-space: nowrap;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.22);
+        border: 1.5px solid rgba(255,255,255,0.35);
+        letter-spacing: 0.02em;
+        pointer-events: none;
+      ">
+        ${shortName}
+        <span style="opacity:0.75; font-size:9px; margin-left:4px;">${ward.code}</span>
+      </div>
+    `;
+    const wardLabelIcon = L.divIcon({
+      className: 'ward-label-marker',
+      html: wardLabelHtml,
+      iconAnchor: [50, 14],
+      iconSize: [100, 28],
+    });
+    wardLabelRef.current = L.marker([ward.center.lat, ward.center.lng], {
+      icon: wardLabelIcon,
+      interactive: false,
+    }).addTo(map);
+
     map.setView([ward.center.lat, ward.center.lng], CONSTANTS.DEFAULT_ZOOM);
-  }, [ward]);
+  }, [ward, lang]);
 
   // Invalidate map size when fullscreen toggled
   useEffect(() => {
@@ -266,16 +299,8 @@ export const MapShell: React.FC<MapShellProps> = ({
             actionIcon={<Sparkles className="w-5 h-5 text-[#111A14]" />}
           />
 
-          {/* Primary Action: Report a Problem */}
+          {/* Actions */}
           <div className="flex flex-col gap-2.5 mt-4">
-            <button
-              onClick={onOpenReport}
-              className="w-full h-14 rounded-full bg-[#111A14] hover:bg-black text-white font-bold text-base flex items-center justify-center gap-2.5 shadow-xl active:scale-[0.98] transition"
-            >
-              <span>{t.reportProblem}</span>
-              <Camera className="w-5 h-5 text-white" />
-            </button>
-
             {/* Secondary Action: Van didn't arrive */}
             <button
               onClick={onReportMissedVan}

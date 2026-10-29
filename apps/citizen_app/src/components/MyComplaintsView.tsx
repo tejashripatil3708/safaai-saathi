@@ -61,6 +61,15 @@ export const MyComplaintsView: React.FC<MyComplaintsViewProps> = ({
         </div>
       ) : (
         <div className="flex flex-col gap-3">
+          {/* "Add New Complaint" pill — always visible when list is non-empty */}
+          <button
+            onClick={onOpenReport}
+            className="h-11 px-5 rounded-full bg-[#111A14] dark:bg-[#F2F7EE] text-white dark:text-[#111A14] text-xs font-bold flex items-center gap-2 self-start active:scale-95 transition shadow mb-1"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>{t.reportProblem}</span>
+          </button>
+
           {complaints.map(complaint => {
             const categoryName = complaint.categoryCustomTitle || (t.categories as any)[complaint.category] || complaint.category;
             return (

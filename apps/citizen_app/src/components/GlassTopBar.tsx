@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Ward } from '../types';
 import { Language } from '../core/localization';
 import { StorageService } from '../services/storageService';
-import { MapPin, Globe, Volume2, VolumeX } from 'lucide-react';
+import { MapPin, Globe, Volume2, VolumeX, Download } from 'lucide-react';
 
 interface GlassTopBarProps {
   ward: Ward;
@@ -22,6 +22,41 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
   onToggleSound,
 }) => {
   const citizenAddress = StorageService.getCitizenAddress();
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstall = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice.outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    } else {
+      const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIos) {
+        alert(
+          lang === 'gu'
+            ? 'એપ ઇન્સ્ટોલ કરવા માટે Safari માં Share બટન (⎙) દબાવી "Add to Home Screen" પસંદ કરો.'
+            : 'To install the app, tap the Share button in Safari and select "Add to Home Screen".'
+        );
+      } else {
+        alert(
+          lang === 'gu'
+            ? 'આ વેબ એપ તમારા બ્રાઉઝરના મેનુ (⋮) માંથી "Add to Home Screen" અથવા "Install App" દ્વારા ઇન્સ્ટોલ કરી શકાય છે.'
+            : 'You can install this app directly from your browser menu (⋮) by tapping "Install app" or "Add to Home Screen".'
+        );
+      }
+    }
+  };
 
   return (
     <header className="absolute top-4 left-4 right-4 z-30 pointer-events-auto">
@@ -35,7 +70,7 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
             <MapPin className="w-5 h-5" />
           </div>
           <div className="min-w-0 pr-1">
-            <h2 className="text-xs font-bold text-[#14201A] truncate max-w-[150px] sm:max-w-[210px]">
+            <h2 className="text-xs font-bold text-[#14201A] truncate max-w-[130px] sm:max-w-[180px]">
               {citizenAddress || (lang === 'gu' ? ward.nameGu : ward.name)}
             </h2>
             <p className="text-[10px] text-[#566259] font-medium truncate">
@@ -44,8 +79,16 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
           </div>
         </button>
 
-        {/* Right: Sound Alert + Language Switcher */}
+        {/* Right: Sound Alert + Language Switcher + Download/Install App */}
         <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            onClick={handleInstallClick}
+            className="w-9 h-9 rounded-full bg-[#E4F1DF] text-[#1B7A3F] hover:bg-[#d5ebce] flex items-center justify-center transition active:scale-90 shadow-sm"
+            title={lang === 'gu' ? 'એપ ડાઉનલોડ / ઇન્સ્ટોલ કરો' : 'Install / Download App'}
+          >
+            <Download className="w-4 h-4" />
+          </button>
+
           <button
             onClick={onToggleSound}
             className={`w-9 h-9 rounded-full flex items-center justify-center transition active:scale-90 ${

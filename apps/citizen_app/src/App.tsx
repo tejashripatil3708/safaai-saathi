@@ -224,7 +224,6 @@ export const App: React.FC = () => {
               vans={vans}
               userLocation={userLocation}
               lang={lang}
-              onOpenReport={() => setIsReportOpen(true)}
               onReportMissedVan={handleReportMissedVan}
               hasReportedMissed={hasReportedMissed}
               onOpenPostCollection={() => setIsPostCollectionOpen(true)}
