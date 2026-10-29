@@ -227,6 +227,7 @@ export const App: React.FC = () => {
               onReportMissedVan={handleReportMissedVan}
               hasReportedMissed={hasReportedMissed}
               onOpenPostCollection={() => setIsPostCollectionOpen(true)}
+              onSelectWard={(w) => setWardId(w.id)}
             />
           </>
         )}

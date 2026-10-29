@@ -24,14 +24,41 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
   const citizenAddress = StorageService.getCitizenAddress();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
+    // Check if app is currently running as an installed standalone app
+    const checkInstalled = () => {
+      const isStandalone =
+        window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as any).standalone === true ||
+        document.referrer.includes('android-app://');
+      setIsInstalled(isStandalone);
+    };
+
+    checkInstalled();
+
+    const mediaQuery = window.matchMedia('(display-mode: standalone)');
+    mediaQuery.addEventListener('change', checkInstalled);
+
     const handleBeforeInstall = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setDeferredPrompt(null);
+      setShowModal(false);
+    };
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      mediaQuery.removeEventListener('change', checkInstalled);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
   }, []);
 
   const handleInstallClick = async () => {
@@ -84,13 +111,15 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
 
           {/* Right: Sound Alert + Language Switcher + Download/Install App */}
           <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              onClick={() => setShowModal(true)}
-              className="w-9 h-9 rounded-full bg-[#E4F1DF] text-[#1B7A3F] hover:bg-[#d5ebce] flex items-center justify-center transition active:scale-90 shadow-sm"
-              title={lang === 'gu' ? 'એપ ડાઉનલોડ / ઇન્સ્ટોલ કરો' : 'Install / Download App'}
-            >
-              <Download className="w-4 h-4" />
-            </button>
+            {!isInstalled && (
+              <button
+                onClick={() => setShowModal(true)}
+                className="w-9 h-9 rounded-full bg-[#E4F1DF] text-[#1B7A3F] hover:bg-[#d5ebce] flex items-center justify-center transition active:scale-90 shadow-sm"
+                title={lang === 'gu' ? 'એપ ડાઉનલોડ / ઇન્સ્ટોલ કરો' : 'Install / Download App'}
+              >
+                <Download className="w-4 h-4" />
+              </button>
+            )}
 
             <button
               onClick={onToggleSound}

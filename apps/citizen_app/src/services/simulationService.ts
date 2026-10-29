@@ -56,11 +56,11 @@ export class GeoService {
   /**
    * Calculates ETA in minutes based on distance and average van speed (15 km/h)
    */
-  static calculateEtaMinutes(distanceMeters: number, speedKmph = CONSTANTS.AVG_VAN_SPEED_KMPH): number {
-    if (distanceMeters <= 50) return 0;
-    const speedMps = (speedKmph * 1000) / 3600;
-    const seconds = distanceMeters / speedMps;
-    return Math.max(1, Math.round(seconds / 60));
+  static calculateEtaMinutes(distanceMeters: number, _speedKmph = CONSTANTS.AVG_VAN_SPEED_KMPH): number {
+    if (distanceMeters <= 250) return 0;
+    // Calculate realistic urban ETA (capped reasonably to 12 minutes within municipal ward boundaries)
+    const minutes = Math.round(distanceMeters / 250);
+    return Math.min(12, Math.max(1, minutes));
   }
 
   /**
@@ -76,22 +76,45 @@ export class GeoService {
   }
 }
 
-// Simulated GPS Waypoints across Godhra North Ward 1 & 2 corridor
-const GODHRA_WAYPOINTS: LocationCoords[] = [
-  { lat: 22.7710, lng: 73.6190 }, // ST Depot Area
-  { lat: 22.7725, lng: 73.6180 },
-  { lat: 22.7740, lng: 73.6165 },
-  { lat: 22.7758, lng: 73.6149 }, // Polan Bazar Center
-  { lat: 22.7770, lng: 73.6135 },
-  { lat: 22.7785, lng: 73.6120 },
-  { lat: 22.7795, lng: 73.6105 },
-  { lat: 22.7780, lng: 73.6125 },
-  { lat: 22.7760, lng: 73.6145 },
-  { lat: 22.7730, lng: 73.6175 },
+// 1. Van 1 (Route North: Wards 1, 2, 3 - Polan Bazar, Station Road, Civil Hospital)
+const NORTH_WAYPOINTS: LocationCoords[] = [
+  { lat: 22.7758, lng: 73.6149 }, // Ward 1 Center
+  { lat: 22.7745, lng: 73.6160 },
+  { lat: 22.7728, lng: 73.6185 },
+  { lat: 22.7712, lng: 73.6198 }, // Ward 2 Center
+  { lat: 22.7735, lng: 73.6215 },
+  { lat: 22.7765, lng: 73.6240 },
+  { lat: 22.7801, lng: 73.6264 }, // Ward 3 Center
+  { lat: 22.7780, lng: 73.6210 },
+  { lat: 22.7765, lng: 73.6170 },
+];
+
+// 2. Van 2 (Route South: Wards 4, 5 - Vavdi Road, Bamroli, Lunawada Road)
+const SOUTH_WAYPOINTS: LocationCoords[] = [
+  { lat: 22.7680, lng: 73.6080 }, // Ward 4 Center
+  { lat: 22.7710, lng: 73.6070 },
+  { lat: 22.7750, lng: 73.6060 },
+  { lat: 22.7800, lng: 73.6055 },
+  { lat: 22.7850, lng: 73.6050 }, // Ward 5 Center
+  { lat: 22.7810, lng: 73.6065 },
+  { lat: 22.7730, lng: 73.6075 },
+];
+
+// 3. Van 3 (Route Rural: Bhamaiya & Tuwa Gram Panchayats)
+const RURAL_WAYPOINTS: LocationCoords[] = [
+  { lat: 22.7550, lng: 73.6300 }, // Bhamaiya Center
+  { lat: 22.7580, lng: 73.6250 },
+  { lat: 22.7650, lng: 73.6100 },
+  { lat: 22.7850, lng: 73.5700 },
+  { lat: 22.7980, lng: 73.5500 }, // Tuwa Center
+  { lat: 22.7800, lng: 73.5800 },
+  { lat: 22.7600, lng: 73.6200 },
 ];
 
 export class VanSimulationEngine {
-  private static waypointIndex = 0;
+  private static northIndex = 0;
+  private static southIndex = 0;
+  private static ruralIndex = 0;
   private static listeners: ((vans: Van[]) => void)[] = [];
   private static arrivalAlertListeners: ((wardId: string, van: Van) => void)[] = [];
   private static alertedWards = new Set<string>();
@@ -101,34 +124,42 @@ export class VanSimulationEngine {
     if (this.timer) return;
 
     this.timer = setInterval(() => {
-      this.waypointIndex = (this.waypointIndex + 1) % GODHRA_WAYPOINTS.length;
-      const targetPoint = GODHRA_WAYPOINTS[this.waypointIndex];
+      this.northIndex = (this.northIndex + 1) % NORTH_WAYPOINTS.length;
+      this.southIndex = (this.southIndex + 1) % SOUTH_WAYPOINTS.length;
+      this.ruralIndex = (this.ruralIndex + 1) % RURAL_WAYPOINTS.length;
 
-      // Update North van location
+      const pNorth = NORTH_WAYPOINTS[this.northIndex];
+      const pSouth = SOUTH_WAYPOINTS[this.southIndex];
+      const pRural = RURAL_WAYPOINTS[this.ruralIndex];
+
+      // Update all 3 vans in their respective allotted 2-3 wards
       const updatedVans = SEED_VANS.map(v => {
-        if (v.id === 'van_gj17_ga_1001') {
-          return {
-            ...v,
-            lastLocation: {
-              lat: targetPoint.lat,
-              lng: targetPoint.lng,
-              updatedAt: new Date().toISOString(),
-              speedKmph: 14 + Math.floor(Math.random() * 8),
-            },
-            batteryPct: Math.max(20, (v.batteryPct ?? 80) - (Math.random() > 0.8 ? 1 : 0)),
-          };
-        }
-        return v;
+        let p = pNorth;
+        if (v.routeId === 'route_godhra_south') p = pSouth;
+        if (v.routeId === 'route_panchmahal_rural') p = pRural;
+
+        return {
+          ...v,
+          status: 'on_shift' as const,
+          lastLocation: {
+            lat: p.lat,
+            lng: p.lng,
+            updatedAt: new Date().toISOString(),
+            speedKmph: 15 + Math.floor(Math.random() * 5),
+          },
+          batteryPct: Math.max(20, (v.batteryPct ?? 80) - (Math.random() > 0.8 ? 1 : 0)),
+        };
       });
 
-      // Check arrival radius for user wards
-      const movingVan = updatedVans.find(v => v.id === 'van_gj17_ga_1001')!;
-      for (const ward of SEED_WARDS) {
-        if (ward.routeId === movingVan.routeId) {
-          const dist = GeoService.getDistanceMeters(movingVan.lastLocation, ward.center);
-          if (dist <= CONSTANTS.ARRIVAL_ALERT_RADIUS_M && !this.alertedWards.has(ward.id)) {
-            this.alertedWards.add(ward.id);
-            this.notifyArrival(ward.id, movingVan);
+      // Check arrival radius for all wards
+      for (const v of updatedVans) {
+        for (const ward of SEED_WARDS) {
+          if (ward.routeId === v.routeId) {
+            const dist = GeoService.getDistanceMeters(v.lastLocation, ward.center);
+            if (dist <= CONSTANTS.ARRIVAL_ALERT_RADIUS_M && !this.alertedWards.has(ward.id)) {
+              this.alertedWards.add(ward.id);
+              this.notifyArrival(ward.id, v);
+            }
           }
         }
       }

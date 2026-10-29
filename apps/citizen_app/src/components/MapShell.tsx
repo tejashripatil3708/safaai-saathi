@@ -4,6 +4,7 @@ import { Language, translations } from '../core/localization';
 import { ContourCard } from './ContourCard';
 import { CivicHabitTips } from './CivicHabitTips';
 import { GeoService, LocationCoords } from '../services/simulationService';
+import { SEED_WARDS } from '../core/seedData';
 import { CONSTANTS } from '../core/constants';
 import {
   AlertOctagon,
@@ -12,7 +13,9 @@ import {
   Minimize2,
   Sparkles,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  MapPin,
+  Compass
 } from 'lucide-react';
 import L from 'leaflet';
 
@@ -24,6 +27,7 @@ interface MapShellProps {
   onReportMissedVan: () => void;
   hasReportedMissed: boolean;
   onOpenPostCollection: () => void;
+  onSelectWard?: (ward: Ward) => void;
 }
 
 export const MapShell: React.FC<MapShellProps> = ({
@@ -34,14 +38,14 @@ export const MapShell: React.FC<MapShellProps> = ({
   onReportMissedVan,
   hasReportedMissed,
   onOpenPostCollection,
+  onSelectWard,
 }) => {
   const t = translations[lang];
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
   const vanMarkerRef = useRef<L.Marker | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
-  const wardCircleRef = useRef<L.Circle | null>(null);
-  const wardLabelRef = useRef<L.Marker | null>(null);
+  const wardCirclesGroupRef = useRef<L.LayerGroup | null>(null);
 
   // Fullscreen map mode state per user requirement
   const [isFullscreenMap, setIsFullscreenMap] = useState(false);
@@ -63,7 +67,7 @@ export const MapShell: React.FC<MapShellProps> = ({
     if (!leafletMapRef.current) {
       const map = L.map(mapContainerRef.current, {
         center: [ward.center.lat, ward.center.lng],
-        zoom: CONSTANTS.DEFAULT_ZOOM,
+        zoom: 13,
         zoomControl: false,
         attributionControl: false,
       });
@@ -72,60 +76,79 @@ export const MapShell: React.FC<MapShellProps> = ({
         maxZoom: 19,
       }).addTo(map);
 
+      wardCirclesGroupRef.current = L.layerGroup().addTo(map);
       leafletMapRef.current = map;
     }
+  }, []);
 
+  // Draw / update ALL Ward boundary sectors on the map (3-4 km radius each)
+  useEffect(() => {
+    if (!leafletMapRef.current || !wardCirclesGroupRef.current) return;
     const map = leafletMapRef.current;
+    const group = wardCirclesGroupRef.current;
 
-    // Draw / update ward radius circle
-    if (wardCircleRef.current) {
-      wardCircleRef.current.remove();
-    }
-    wardCircleRef.current = L.circle([ward.center.lat, ward.center.lng], {
-      radius: ward.radiusM,
-      color: '#1B7A3F',
-      weight: 2,
-      dashArray: '6, 8',
-      fillColor: '#6DB36F',
-      fillOpacity: 0.12,
-    }).addTo(map);
+    group.clearLayers();
 
-    // Draw / update ward label marker
-    if (wardLabelRef.current) {
-      wardLabelRef.current.remove();
-    }
-    const wardDisplayName = lang === 'gu' ? ward.nameGu : ward.name;
-    const shortName = wardDisplayName.split(' - ')[0]; // e.g. "Ward 1" or "વોર્ડ ૧"
-    const wardLabelHtml = `
-      <div style="
-        background: rgba(27,122,63,0.92);
-        color: #fff;
-        font-size: 11px;
-        font-weight: 700;
-        padding: 3px 9px;
-        border-radius: 20px;
-        white-space: nowrap;
-        box-shadow: 0 1px 6px rgba(0,0,0,0.22);
-        border: 1.5px solid rgba(255,255,255,0.35);
-        letter-spacing: 0.02em;
-        pointer-events: none;
-      ">
-        ${shortName}
-        <span style="opacity:0.75; font-size:9px; margin-left:4px;">${ward.code}</span>
-      </div>
-    `;
-    const wardLabelIcon = L.divIcon({
-      className: 'ward-label-marker',
-      html: wardLabelHtml,
-      iconAnchor: [50, 14],
-      iconSize: [100, 28],
+    SEED_WARDS.forEach(w => {
+      const isSelected = w.id === ward.id;
+      const wardDisplayName = lang === 'gu' ? w.nameGu : w.name;
+      const shortName = wardDisplayName.split(' - ')[0];
+
+      // Draw 3-4 km radius sector circle
+      const circle = L.circle([w.center.lat, w.center.lng], {
+        radius: w.radiusM || 3200,
+        color: isSelected ? '#1B7A3F' : '#74897A',
+        weight: isSelected ? 3 : 1.5,
+        dashArray: isSelected ? undefined : '5, 8',
+        fillColor: isSelected ? '#6DB36F' : '#A3C4BC',
+        fillOpacity: isSelected ? 0.16 : 0.05,
+      }).addTo(group);
+
+      circle.on('click', () => {
+        if (onSelectWard) {
+          onSelectWard(w);
+        }
+      });
+
+      // Label badge marker
+      const wardLabelHtml = `
+        <div style="
+          background: ${isSelected ? '#1B7A3F' : 'rgba(255,255,255,0.92)'};
+          color: ${isSelected ? '#ffffff' : '#14201A'};
+          font-size: 11px;
+          font-weight: 700;
+          padding: 3px 9px;
+          border-radius: 20px;
+          white-space: nowrap;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+          border: ${isSelected ? '2px solid #ffffff' : '1px solid #DCE5D9'};
+          cursor: pointer;
+        ">
+          ${shortName}
+          <span style="opacity:0.8; font-size:9px; margin-left:3px;">${w.code}</span>
+        </div>
+      `;
+
+      const wardLabelIcon = L.divIcon({
+        className: 'ward-label-marker',
+        html: wardLabelHtml,
+        iconAnchor: [45, 14],
+        iconSize: [90, 28],
+      });
+
+      const marker = L.marker([w.center.lat, w.center.lng], {
+        icon: wardLabelIcon,
+      }).addTo(group);
+
+      marker.on('click', () => {
+        if (onSelectWard) {
+          onSelectWard(w);
+        }
+      });
     });
-    wardLabelRef.current = L.marker([ward.center.lat, ward.center.lng], {
-      icon: wardLabelIcon,
-      interactive: false,
-    }).addTo(map);
 
-    map.setView([ward.center.lat, ward.center.lng], CONSTANTS.DEFAULT_ZOOM);
+    // Fly to current ward center smoothly
+    map.flyTo([ward.center.lat, ward.center.lng], 13, { duration: 0.8 });
   }, [ward, lang]);
 
   // Invalidate map size when fullscreen toggled
@@ -207,7 +230,7 @@ export const MapShell: React.FC<MapShellProps> = ({
     if (leafletMapRef.current && activeVan) {
       leafletMapRef.current.flyTo(
         [activeVan.lastLocation.lat, activeVan.lastLocation.lng],
-        CONSTANTS.DEFAULT_ZOOM,
+        14,
         { duration: 1 }
       );
     }
@@ -217,6 +240,31 @@ export const MapShell: React.FC<MapShellProps> = ({
     <div className="relative w-full h-full flex flex-col overflow-hidden">
       {/* 1. Full Bleed Map Canvas */}
       <div ref={mapContainerRef} className="absolute inset-0 z-0 bg-[#E9F1E6]" />
+
+      {/* Ward Selector Horizontal Pill Carousel (3-4 km Radius Sectors) */}
+      <div className="absolute top-22 left-4 right-4 z-20 overflow-x-auto no-scrollbar flex items-center gap-2 py-1 pointer-events-auto">
+        {SEED_WARDS.map(w => {
+          const isSelected = w.id === ward.id;
+          const label = (lang === 'gu' ? w.nameGu : w.name).split(' - ')[0];
+          return (
+            <button
+              key={w.id}
+              onClick={() => onSelectWard && onSelectWard(w)}
+              className={`h-8 px-3.5 rounded-full text-xs font-bold whitespace-nowrap shadow-md transition active:scale-95 flex items-center gap-1.5 border ${
+                isSelected
+                  ? 'bg-[#1B7A3F] text-white border-[#1B7A3F]'
+                  : 'bg-white/95 text-[#14201A] border-[#DCE5D9] hover:bg-[#F3F6F2]'
+              }`}
+            >
+              <Compass className={`w-3 h-3 ${isSelected ? 'text-white' : 'text-[#1B7A3F]'}`} />
+              <span>{label}</span>
+              <span className={`text-[9px] ${isSelected ? 'opacity-85 text-white' : 'text-[#74897A]'}`}>
+                ~3.2km
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
       {/* Floating Map Controls (Right Side) */}
       <div
@@ -281,7 +329,7 @@ export const MapShell: React.FC<MapShellProps> = ({
             </span>
           </button>
 
-          {/* Contour Card for Van ETA (Battery removed per user request) */}
+          {/* Contour Card for Van ETA */}
           <ContourCard
             seed={ward.id.length * 17}
             label={t.etaTitle}
@@ -291,7 +339,7 @@ export const MapShell: React.FC<MapShellProps> = ({
               isNear
                 ? t.arrived
                 : activeVan
-                ? `${activeVan.plateNo} • ${activeVan.lastLocation.speedKmph} km/h • Godhra Swachhata Route`
+                ? `${activeVan.plateNo} • ${activeVan.driverName || 'Driver'} • ${(lang === 'gu' ? ward.nameGu : ward.name).split(' - ')[0]}`
                 : t.noVanOnRoute
             }
             badge={activeVan ? activeVan.plateNo : 'ON ROUTE'}

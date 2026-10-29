@@ -4,11 +4,11 @@ export const SEED_WARDS: Ward[] = [
   {
     id: 'ward_godhra_01',
     name: 'Ward 1 - Polan Bazar & Chitra Cinema Area',
-    nameGu: 'વોર્ડ ૧ - પોલન બજાર અને ચિત્રા ટોકીઝ વિસ્તાર',
+    nameGu: 'વોર્ડ ૧ - પોલન બજાર અને ચિત્રા ટોકીઝ',
     code: 'GNP-W01',
     type: 'urban',
     center: { lat: 22.7758, lng: 73.6149 },
-    radiusM: 800,
+    radiusM: 3200, // 3.2 km radius sector
     routeId: 'route_godhra_north',
     inspectorId: 'staff_inspector_01',
     inspectorName: 'Rajesh Parmar (Inspector)',
@@ -20,11 +20,11 @@ export const SEED_WARDS: Ward[] = [
   {
     id: 'ward_godhra_02',
     name: 'Ward 2 - Station Road & ST Bus Depot',
-    nameGu: 'વોર્ડ ૨ - સ્ટેશન રોડ અને એસ.ટી. બસ સ્ટેન્ડ',
+    nameGu: 'વોર્ડ ૨ - સ્ટેશન રોડ અને એસ.ટી. ડેપો',
     code: 'GNP-W02',
     type: 'urban',
     center: { lat: 22.7712, lng: 73.6198 },
-    radiusM: 750,
+    radiusM: 3000, // 3.0 km radius sector
     routeId: 'route_godhra_north',
     inspectorId: 'staff_inspector_01',
     inspectorName: 'Rajesh Parmar (Inspector)',
@@ -36,11 +36,11 @@ export const SEED_WARDS: Ward[] = [
   {
     id: 'ward_godhra_03',
     name: 'Ward 3 - Civil Hospital & Collectorate Complex',
-    nameGu: 'વોર્ડ ૩ - સિવિલ હોસ્પિટલ અને કલેક્ટર કચેરી સંકુલ',
+    nameGu: 'વોર્ડ ૩ - સિવિલ હોસ્પિટલ અને કલેક્ટર સંકુલ',
     code: 'GNP-W03',
     type: 'urban',
     center: { lat: 22.7801, lng: 73.6264 },
-    radiusM: 900,
+    radiusM: 3400, // 3.4 km radius sector
     routeId: 'route_godhra_north',
     inspectorId: 'staff_inspector_02',
     inspectorName: 'Manish Baria (Inspector)',
@@ -52,11 +52,11 @@ export const SEED_WARDS: Ward[] = [
   {
     id: 'ward_godhra_04',
     name: 'Ward 4 - Vavdi Road & Bamroli Swachhata Zone',
-    nameGu: 'વોર્ડ ૪ - વાવડી રોડ અને બામરોલી સ્વચ્છતા ઝોન',
+    nameGu: 'વોર્ડ ૪ - વાવડી રોડ અને બામરોલી ઝોન',
     code: 'GNP-W04',
     type: 'urban',
     center: { lat: 22.7680, lng: 73.6080 },
-    radiusM: 850,
+    radiusM: 3300, // 3.3 km radius sector
     routeId: 'route_godhra_south',
     inspectorId: 'staff_inspector_02',
     inspectorName: 'Manish Baria (Inspector)',
@@ -68,11 +68,11 @@ export const SEED_WARDS: Ward[] = [
   {
     id: 'ward_godhra_05',
     name: 'Ward 5 - Lunawada Road & Ankleshwar Highway',
-    nameGu: 'વોર્ડ ૫ - લુણાવાડા રોડ અને અંકલેશ્વર હાઇવે',
+    nameGu: 'વોર્ડ ૫ - લુણાવાડા રોડ હાઇવે ઝોન',
     code: 'GNP-W05',
     type: 'urban',
     center: { lat: 22.7850, lng: 73.6050 },
-    radiusM: 950,
+    radiusM: 3500, // 3.5 km radius sector
     routeId: 'route_godhra_south',
     inspectorId: 'staff_inspector_03',
     inspectorName: 'Kirit Rathod (Inspector)',
@@ -84,11 +84,11 @@ export const SEED_WARDS: Ward[] = [
   {
     id: 'ward_rural_bhamaiya',
     name: 'Bhamaiya Gram Panchayat',
-    nameGu: 'ભામાઇયા ગ્રામ પંચાયત (ગોધરા તાલુકો)',
+    nameGu: 'ભામાઇયા ગ્રામ પંચાયત',
     code: 'GP-BHAM',
     type: 'rural',
     center: { lat: 22.7550, lng: 73.6300 },
-    radiusM: 1300,
+    radiusM: 3800, // 3.8 km radius sector
     routeId: 'route_panchmahal_rural',
     inspectorId: 'staff_talati_01',
     inspectorName: 'D. M. Patel (Talati-cum-Mantri)',
@@ -100,11 +100,11 @@ export const SEED_WARDS: Ward[] = [
   {
     id: 'ward_rural_tuwa',
     name: 'Tuwa Gram Panchayat & Kund Area',
-    nameGu: 'ટુવા ગ્રામ પંચાયત અને ગરમ કુંડ વિસ્તાર',
+    nameGu: 'ટુવા ગ્રામ પંચાયત કુંડ વિસ્તાર',
     code: 'GP-TUWA',
     type: 'rural',
     center: { lat: 22.7980, lng: 73.5500 },
-    radiusM: 1500,
+    radiusM: 3600, // 3.6 km radius sector
     routeId: 'route_panchmahal_rural',
     inspectorId: 'staff_talati_02',
     inspectorName: 'S. N. Joshi (Talati-cum-Mantri)',
@@ -173,12 +173,12 @@ export const SEED_VANS: Van[] = [
     id: 'van_gj17_ga_1003',
     plateNo: 'GJ-17-GA-1003',
     routeId: 'route_panchmahal_rural',
-    status: 'idle',
+    status: 'on_shift',
     lastLocation: {
       lat: 22.7560,
       lng: 73.6280,
-      updatedAt: new Date(Date.now() - 3600000).toISOString(),
-      speedKmph: 0,
+      updatedAt: new Date().toISOString(),
+      speedKmph: 16,
     },
     currentTripId: 'trip_20261029_003',
     batteryPct: 92,
