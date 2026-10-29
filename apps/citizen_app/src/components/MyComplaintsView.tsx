@@ -42,9 +42,11 @@ export const MyComplaintsView: React.FC<MyComplaintsViewProps> = ({
       {/* Complaints List */}
       {complaints.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center my-10 bg-white dark:bg-[#16221B] rounded-[28px] border border-[#DCE5D9] dark:border-[#2A3B31] shadow-elev1">
-          <div className="w-20 h-20 rounded-full bg-[#E4F1DF] dark:bg-[#1F3A2A] text-[#1B7A3F] dark:text-[#6DB36F] flex items-center justify-center mb-4 text-3xl">
-            🌱
-          </div>
+          <img
+            src="./logo.svg"
+            alt="Safai Saathi"
+            className="w-20 h-20 rounded-3xl object-cover mb-4 shadow-sm border border-[#DCE5D9] dark:border-[#2A3B31] bg-white"
+          />
           <h3 className="text-base font-bold text-[#14201A] dark:text-[#EAF2E6]">
             {lang === 'gu' ? 'કોઈ સક્રિય ફરિયાદ નથી' : 'No Complaints Filed'}
           </h3>

@@ -4,9 +4,10 @@ import { ComplaintCategory, Complaint } from '../types';
 import { Language, translations } from '../core/localization';
 import { CameraModal } from './CameraModal';
 import { OtpModal } from './OtpModal';
-import { WhatsAppDispatchModal, generateBilingualWhatsAppMessage } from './WhatsAppDispatchModal';
+import { TicketDispatchedModal } from './TicketDispatchedModal';
 import { LocationCoords, GeoService } from '../services/simulationService';
 import { StorageService } from '../services/storageService';
+import { WhatsAppDispatchService, WhatsAppDispatchResult } from '../services/whatsappDispatchService';
 import { SEED_WARDS } from '../core/seedData';
 import confetti from 'canvas-confetti';
 
@@ -37,7 +38,8 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isOtpOpen, setIsOtpOpen] = useState(false);
   const [createdComplaint, setCreatedComplaint] = useState<Complaint | null>(null);
-  const [isWhatsAppOpen, setIsWhatsAppOpen] = useState(false);
+  const [dispatchResult, setDispatchResult] = useState<WhatsAppDispatchResult | null>(null);
+  const [isDispatchedOpen, setIsDispatchedOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -67,24 +69,19 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
       return;
     }
 
-    // Check if phone number is verified; if not, enforce OTP verification first!
-    const verifiedPhone = StorageService.getVerifiedPhone();
-    if (!verifiedPhone) {
-      setIsOtpOpen(true);
-      return;
-    }
-
-    executeSubmission(verifiedPhone);
+    // STRICT REQUIREMENT: Always prompt for OTP verification every single time!
+    // Never bypass OTP, never remember phone number from previous submissions.
+    setIsOtpOpen(true);
   };
 
-  const executeSubmission = (phone: string) => {
+  const executeSubmission = async (phone: string) => {
     setIsSubmitting(true);
     setError(null);
 
     const ticketId = GeoService.generateTicketId();
     const resolvedWard = GeoService.findWardByLocation(capturedLocation || currentWard.center) || currentWard;
 
-    // Save citizen address for future convenience
+    // Save citizen street/area address for future convenience (phone number is NEVER saved)
     StorageService.setCitizenAddress(address.trim(), resolvedWard.id);
 
     const newComplaint: Complaint = {
@@ -109,32 +106,26 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
       slaDeadline: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
     };
 
-    setTimeout(() => {
-      StorageService.saveComplaint(newComplaint);
-      onComplaintCreated(newComplaint);
-      setIsSubmitting(false);
-      setCreatedComplaint(newComplaint);
+    // Save complaint locally
+    StorageService.saveComplaint(newComplaint);
+    onComplaintCreated(newComplaint);
+    setCreatedComplaint(newComplaint);
 
-      // Celebratory feedback
-      confetti({
-        particleCount: 80,
-        spread: 60,
-        origin: { y: 0.7 },
-        colors: ['#1B7A3F', '#6DB36F', '#F0873A', '#B5CF8A'],
-      });
+    // Directly dispatch official ticket to citizen's WhatsApp number via automated bot service
+    const result = await WhatsAppDispatchService.dispatchTicketToWhatsApp(newComplaint);
+    setDispatchResult(result);
+    setIsSubmitting(false);
 
-      // Automatically launch WhatsApp with the bilingual ticket
-      try {
-        const waMsg = generateBilingualWhatsAppMessage(newComplaint);
-        const waUrl = `https://wa.me/?text=${encodeURIComponent(waMsg)}`;
-        window.open(waUrl, '_blank');
-      } catch (_e) {
-        // Fallback handled by WhatsAppDispatchModal
-      }
+    // Celebratory confetti
+    confetti({
+      particleCount: 80,
+      spread: 60,
+      origin: { y: 0.7 },
+      colors: ['#087F78', '#1B7A3F', '#F5B544', '#A8E5CB'],
+    });
 
-      // Prompt opening WhatsApp ticket immediately
-      setIsWhatsAppOpen(true);
-    }, 400);
+    // Open direct confirmation card
+    setIsDispatchedOpen(true);
   };
 
   return (
@@ -143,17 +134,24 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
         <div className="w-full max-w-md max-h-[92vh] bg-white rounded-t-[32px] sm:rounded-[28px] overflow-y-auto shadow-2xl flex flex-col border border-[#DCE5D9]">
           {/* Header */}
           <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md px-6 py-4 border-b border-[#DCE5D9] flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-[#14201A]">
-                {t.reportProblem}
-              </h3>
-              <p className="text-xs text-[#566259]">
-                {address || (lang === 'gu' ? currentWard.nameGu : currentWard.name)}
-              </p>
+            <div className="flex items-center gap-2.5">
+              <img
+                src="./logo.svg"
+                alt="Logo"
+                className="w-8 h-8 rounded-xl object-cover shadow-sm"
+              />
+              <div>
+                <h3 className="text-base font-bold text-[#14201A]">
+                  {t.reportProblem}
+                </h3>
+                <p className="text-[11px] text-[#566259]">
+                  {address || (lang === 'gu' ? currentWard.nameGu : currentWard.name)}
+                </p>
+              </div>
             </div>
             <button
               onClick={onClose}
-              className="w-9 h-9 rounded-full bg-[#E9F1E6] flex items-center justify-center text-[#566259]"
+              className="w-9 h-9 rounded-full bg-[#E9F1E6] flex items-center justify-center text-[#566259] hover:text-black"
             >
               <X className="w-5 h-5" />
             </button>
@@ -313,7 +311,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
         lang={lang}
       />
 
-      {/* Mandatory Phone OTP Verification Modal */}
+      {/* Mandatory Phone OTP Verification Modal on Every Single Submission */}
       <OtpModal
         isOpen={isOtpOpen}
         onClose={() => setIsOtpOpen(false)}
@@ -321,12 +319,13 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
         lang={lang}
       />
 
-      {/* WhatsApp Ticket Allotment Modal */}
-      <WhatsAppDispatchModal
-        isOpen={isWhatsAppOpen}
+      {/* Direct Ticket Dispatched Confirmation Modal */}
+      <TicketDispatchedModal
+        isOpen={isDispatchedOpen}
         complaint={createdComplaint}
+        dispatchResult={dispatchResult}
         onClose={() => {
-          setIsWhatsAppOpen(false);
+          setIsDispatchedOpen(false);
           onClose();
         }}
         lang={lang}

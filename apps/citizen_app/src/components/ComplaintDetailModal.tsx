@@ -108,13 +108,20 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
         <div className="w-full max-w-md max-h-[92vh] bg-white dark:bg-[#16221B] rounded-t-[32px] sm:rounded-[28px] overflow-y-auto shadow-2xl flex flex-col border border-[#DCE5D9] dark:border-[#2A3B31]">
           {/* Top Header */}
           <div className="sticky top-0 z-10 bg-white/95 dark:bg-[#16221B]/95 backdrop-blur-md px-6 py-4 border-b border-[#DCE5D9] dark:border-[#2A3B31] flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-mono font-bold text-[#1B7A3F] dark:text-[#6DB36F] bg-[#E4F1DF] dark:bg-[#1F3A2A] px-2.5 py-0.5 rounded-full">
-                {complaint.ticketId}
-              </span>
-              <h3 className="text-base font-bold text-[#14201A] dark:text-[#EAF2E6] mt-1">
-                {complaint.categoryCustomTitle || categoryName}
-              </h3>
+            <div className="flex items-center gap-2.5">
+              <img
+                src="./logo.svg"
+                alt="Logo"
+                className="w-9 h-9 rounded-xl object-cover shadow-sm bg-white border border-[#DCE5D9]"
+              />
+              <div>
+                <span className="text-[11px] font-mono font-bold text-[#1B7A3F] dark:text-[#6DB36F] bg-[#E4F1DF] dark:bg-[#1F3A2A] px-2.5 py-0.5 rounded-full">
+                  {complaint.ticketId}
+                </span>
+                <h3 className="text-base font-bold text-[#14201A] dark:text-[#EAF2E6] mt-1">
+                  {complaint.categoryCustomTitle || categoryName}
+                </h3>
+              </div>
             </div>
             <button
               onClick={onClose}

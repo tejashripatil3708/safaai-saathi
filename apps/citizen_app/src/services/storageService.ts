@@ -68,14 +68,6 @@ export class StorageService {
     localStorage.setItem(STORAGE_KEYS.INTRO_SEEN, seen ? 'true' : 'false');
   }
 
-  static getVerifiedPhone(): string | null {
-    return localStorage.getItem(STORAGE_KEYS.PHONE);
-  }
-
-  static setVerifiedPhone(phone: string): void {
-    localStorage.setItem(STORAGE_KEYS.PHONE, phone);
-  }
-
   static getComplaints(): Complaint[] {
     const data = localStorage.getItem(STORAGE_KEYS.COMPLAINTS);
     if (!data) return [];

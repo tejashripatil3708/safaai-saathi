@@ -96,9 +96,11 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         <div className="px-6 py-4 flex-1 flex flex-col items-center justify-center text-center">
           {currentStep === 0 && (
             <div className="flex flex-col items-center gap-4 animate-in zoom-in-95">
-              <div className="w-24 h-24 rounded-full bg-[#E4F1DF] dark:bg-[#1F3A2A] text-[#1B7A3F] dark:text-[#6DB36F] flex items-center justify-center text-5xl shadow-sm">
-                🌱
-              </div>
+              <img
+                src="./logo.svg"
+                alt="Safai Saathi"
+                className="w-24 h-24 rounded-3xl shadow-lg border-2 border-white object-cover bg-white"
+              />
               <h2 className="text-2xl font-bold text-[#14201A] dark:text-[#EAF2E6] leading-tight">
                 {t.intro.welcomeTitle}
               </h2>

@@ -96,9 +96,11 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
             onClick={onOpenSettings}
             className="flex items-center gap-2.5 text-left active:scale-95 transition min-w-0"
           >
-            <div className="w-10 h-10 rounded-full bg-[#E4F1DF] text-[#1B7A3F] flex items-center justify-center shrink-0 shadow-sm">
-              <MapPin className="w-5 h-5" />
-            </div>
+            <img
+              src="./logo.svg"
+              alt="Safai Saathi"
+              className="w-10 h-10 rounded-full object-cover shrink-0 shadow-sm border border-emerald-600/30 bg-white"
+            />
             <div className="min-w-0 pr-1">
               <h2 className="text-xs font-bold text-[#14201A] truncate max-w-[130px] sm:max-w-[180px]">
                 {citizenAddress || (lang === 'gu' ? ward.nameGu : ward.name)}
@@ -151,9 +153,11 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
           <div className="bg-white dark:bg-[#16221B] w-full max-w-sm rounded-[32px] p-6 shadow-2xl border border-[#DCE5D9] dark:border-[#2A3B31] flex flex-col gap-4">
             <div className="flex items-center justify-between pb-2 border-b border-[#E9F1E6] dark:border-[#2A3B31]">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full bg-[#E4F1DF] text-[#1B7A3F] flex items-center justify-center font-bold">
-                  🌱
-                </div>
+                <img
+                  src="./logo.svg"
+                  alt="Safai Saathi"
+                  className="w-10 h-10 rounded-xl object-cover bg-white shadow-sm border border-[#DCE5D9]"
+                />
                 <div>
                   <h3 className="text-sm font-bold text-[#14201A] dark:text-[#EAF2E6]">
                     {lang === 'gu' ? 'સફાઈ સાથી ડાઉનલોડ' : 'Download Safai Saathi'}
@@ -203,10 +207,32 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
                   {lang === 'gu' ? 'ઓફલાઇન ZIP ડાઉનલોડ કરો' : 'Download Offline App ZIP'}
                 </div>
                 <div className="text-[10px] text-[#566259] dark:text-[#9DB0A2] mt-0.5">
-                  164 KB • Ready to host anywhere
+                  Pre-bundled web application package
                 </div>
               </div>
               <Download className="w-4 h-4 text-[#74897A]" />
+            </a>
+
+            {/* Option 3: Download Android APK Build */}
+            <a
+              href="https://github.com/tejashripatil3708/safai-saathi/actions"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full p-3.5 rounded-2xl bg-[#E4F1DF] dark:bg-[#1A3324] hover:bg-[#d8eed2] text-[#14201A] dark:text-[#EAF2E6] flex items-center gap-3 active:scale-[0.98] transition border border-[#B5CF8A] dark:border-[#2A3B31]"
+            >
+              <div className="w-10 h-10 rounded-xl bg-[#1B7A3F] text-white flex items-center justify-center shrink-0 shadow-sm">
+                <Smartphone className="w-5 h-5" />
+              </div>
+              <div className="text-left flex-1 min-w-0">
+                <div className="text-xs font-bold leading-tight flex items-center gap-1.5">
+                  <span>{lang === 'gu' ? 'Android APK ડાઉનલોડ' : 'Download Android APK'}</span>
+                  <span className="text-[9px] bg-[#1B7A3F] text-white px-1.5 py-0.5 rounded font-mono font-bold">APK</span>
+                </div>
+                <div className="text-[10px] text-[#566259] dark:text-[#9DB0A2] mt-0.5">
+                  {lang === 'gu' ? 'GitHub Actions દ્વારા બનેલ Android ઇન્સ્ટોલર' : 'Direct APK builds from GitHub Actions CI'}
+                </div>
+              </div>
+              <ExternalLink className="w-4 h-4 text-[#1B7A3F]" />
             </a>
 
             {/* Hint for browser menu install */}

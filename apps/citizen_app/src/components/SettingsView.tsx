@@ -75,13 +75,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   return (
     <div className="w-full flex-1 flex flex-col p-5 pb-28 gap-5 max-w-lg mx-auto">
       {/* Title */}
-      <div className="pt-2">
-        <h1 className="text-3xl font-light text-[#14201A] dark:text-[#EAF2E6] tracking-tight">
-          {t.settings}
-        </h1>
-        <p className="text-xs text-[#566259] dark:text-[#9DB0A2] mt-1">
-          {lang === 'gu' ? 'સરનામું, થીમ અને પસંદગીઓ' : 'Residence address, theme & preferences'}
-        </p>
+      <div className="pt-2 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-light text-[#14201A] dark:text-[#EAF2E6] tracking-tight">
+            {t.settings}
+          </h1>
+          <p className="text-xs text-[#566259] dark:text-[#9DB0A2] mt-1">
+            {lang === 'gu' ? 'સરનામું, થીમ અને પસંદગીઓ' : 'Residence address, theme & preferences'}
+          </p>
+        </div>
+        <img
+          src="./logo.svg"
+          alt="Safai Saathi"
+          className="w-12 h-12 rounded-2xl shadow-sm border border-[#DCE5D9] dark:border-[#2A3B31] object-cover bg-white"
+        />
       </div>
 
       {/* 1. Address / Locality Setup */}

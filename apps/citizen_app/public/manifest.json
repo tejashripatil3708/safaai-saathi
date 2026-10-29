@@ -4,6 +4,18 @@
   "description": "Citizen-Centric Municipal & Rural Garbage Collection, Open Gutter & Public Sanitation Monitoring System - Godhra Panchmahal",
   "icons": [
     {
+      "src": "logo.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    },
+    {
       "src": "icon-192.png",
       "type": "image/png",
       "sizes": "192x192",
