@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckCircle, MessageSquare, Copy, ExternalLink, Share2 } from 'lucide-react';
+import { X, CheckCircle, MessageSquare, Copy, ExternalLink, Share2, MapPin } from 'lucide-react';
 import { translations, Language } from '../core/localization';
 import { Complaint } from '../types';
 
@@ -21,20 +21,20 @@ export const WhatsAppDispatchModal: React.FC<WhatsAppDispatchModalProps> = ({
 
   if (!isOpen || !complaint) return null;
 
-  const categoryName = (t.categories as any)[complaint.category] || complaint.category;
+  const categoryName = complaint.categoryCustomTitle || (t.categories as any)[complaint.category] || complaint.category;
 
   const whatsappMessage = 
-`*🌱 પંચમહાલ ગોધરા સ્વચ્છતા સાથી ટિકિટ*
-*Panchmahal Godhra Sanitation Ticket*
+`*🌱 પંચમહાલ ગોધરા સ્વચ્છતા સાથી - અધિકૃત ફરિયાદ ટિકિટ*
+*Panchmahal Godhra Sanitation Grievance Ticket*
 --------------------------------
 *ટિકિટ ક્રમાંક / Ticket ID:* ${complaint.ticketId}
-*સ્થિતિ / Status:* ${complaint.status.toUpperCase()}
-*સમસ્યાનો પ્રકાર / Category:* ${categoryName}
+*સ્થિતિ / Status:* RECEIVED (નોંધાયેલ - એડમિન પોર્ટલ પર મોકલેલ)
+*સમસ્યા / Category:* ${categoryName}
+${complaint.description ? `*વિગત / Description:* ${complaint.description}\n` : ''}*સરનામું / Address:* ${complaint.address || 'Godhra, Panchmahal'}
 *તારીખ / Time:* ${new Date(complaint.createdAt).toLocaleString()}
-*વોર્ડ / Ward:* ${complaint.wardId}
-*લોકેશન / GPS:* ${complaint.location.lat.toFixed(5)}, ${complaint.location.lng.toFixed(5)}
+*જીપીએસ લોકેશન / GPS:* ${complaint.location.lat.toFixed(5)}, ${complaint.location.lng.toFixed(5)}
 --------------------------------
-*લાઈવ ટ્રેકિંગ લિંક / Live Track:*
+*લાઈવ ટ્રેકિંગ લિંક / Live Track Complaint:*
 ${window.location.origin}?ticket=${complaint.ticketId}
 
 _નોંધ: ૨૪ કલાકમાં નિરાકરણ ન આવ્યે ચીફ ઓફિસર/DDO કચેરીને ઓટો-એસ્કેલેટ થશે._`;
@@ -87,10 +87,17 @@ _નોંધ: ૨૪ કલાકમાં નિરાકરણ ન આવ્�
               {complaint.ticketId}
             </span>
           </div>
+
           <p className="text-sm font-semibold text-[#14201A]">
             {categoryName}
           </p>
-          <p className="text-xs text-[#566259]">
+
+          <p className="text-xs text-[#566259] flex items-center gap-1">
+            <MapPin className="w-3.5 h-3.5 text-[#1B7A3F]" />
+            <span>{complaint.address || 'Godhra'}</span>
+          </p>
+
+          <p className="text-[11px] text-[#566259]">
             {new Date(complaint.createdAt).toLocaleString()}
           </p>
         </div>

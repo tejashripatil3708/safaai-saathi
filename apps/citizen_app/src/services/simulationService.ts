@@ -115,7 +115,7 @@ export class VanSimulationEngine {
               updatedAt: new Date().toISOString(),
               speedKmph: 14 + Math.floor(Math.random() * 8),
             },
-            batteryPct: Math.max(20, v.batteryPct - (Math.random() > 0.8 ? 1 : 0)),
+            batteryPct: Math.max(20, (v.batteryPct ?? 80) - (Math.random() > 0.8 ? 1 : 0)),
           };
         }
         return v;

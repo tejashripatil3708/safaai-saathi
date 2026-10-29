@@ -36,7 +36,7 @@ export interface Van {
   status: VanStatus;
   lastLocation: VanLocation;
   currentTripId: string;
-  batteryPct: number;
+  batteryPct?: number;
   driverName?: string;
   driverPhone?: string;
 }
@@ -44,8 +44,8 @@ export interface Van {
 export interface Route {
   id: string;
   name: string;
-  wardIds: string[]; // in visiting order
-  scheduledStartTime: string; // HH:mm
+  wardIds: string[];
+  scheduledStartTime: string;
 }
 
 export interface WardDone {
@@ -73,7 +73,17 @@ export interface Trip {
   mockLocationDetected: boolean;
 }
 
-export type ComplaintCategory = 'garbage_dump' | 'open_gutter' | 'missed_collection' | 'other';
+// Extended Complaint Categories per user requirement
+export type ComplaintCategory =
+  | 'garbage_dump'
+  | 'open_gutter'
+  | 'missed_collection'
+  | 'dead_animal'
+  | 'public_toilet'
+  | 'construction_debris'
+  | 'hazardous_waste'
+  | 'other';
+
 export type ComplaintStatus = 'received' | 'assigned' | 'resolved' | 'escalated' | 'queued';
 
 export interface Complaint {
@@ -82,6 +92,9 @@ export interface Complaint {
   deviceId: string;
   phone?: string;
   category: ComplaintCategory;
+  categoryCustomTitle?: string;
+  description?: string;
+  address: string;
   photoUrl: string;
   location: {
     lat: number;
@@ -100,23 +113,7 @@ export interface Complaint {
   resolvedAt?: string;
   mergedInto?: string;
   note?: string;
-}
-
-export interface Rating {
-  id: string;
-  wardId: string;
-  date: string;
-  stars: number;
-  deviceId: string;
-}
-
-export interface Notice {
-  id: string;
-  targetType: 'van' | 'ward' | 'all';
-  targetId: string;
-  message: string;
-  createdAt: string;
-  createdBy: string;
+  slaDeadline?: string;
 }
 
 export interface Staff {
@@ -127,6 +124,16 @@ export interface Staff {
   wardIds: string[];
   talukaId: string;
   phone: string;
+}
+
+export interface CitizenAddress {
+  addressText: string;
+  location?: {
+    lat: number;
+    lng: number;
+  };
+  wardId: string;
+  updatedAt: string;
 }
 
 export interface CitizenCollectionFeedback {

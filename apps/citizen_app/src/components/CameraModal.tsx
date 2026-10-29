@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Camera, X, RefreshCw, Check, AlertCircle, MapPin, Clock } from 'lucide-react';
+import { Camera, X, RefreshCw, Check, AlertCircle, ShieldAlert, Sparkles } from 'lucide-react';
 import { translations, Language } from '../core/localization';
 import { LocationCoords } from '../services/simulationService';
 
@@ -20,27 +20,77 @@ export const CameraModal: React.FC<CameraModalProps> = ({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [capturedCoords, setCapturedCoords] = useState<LocationCoords | null>(null);
   const [capturedTimestamp, setCapturedTimestamp] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [cameraLoading, setCameraLoading] = useState(true);
+  const [cameraLoading, setCameraLoading] = useState(false);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
 
-  // Start real in-app camera stream
   useEffect(() => {
     if (!isOpen) {
       stopCamera();
       setCapturedImage(null);
+      setHasPermission(null);
       return;
     }
 
-    startCamera();
+    // Check existing permission if available
+    if (navigator.permissions && (navigator.permissions as any).query) {
+      navigator.permissions
+        .query({ name: 'camera' as any })
+        .then(result => {
+          if (result.state === 'granted') {
+            setHasPermission(true);
+            startCamera();
+          } else {
+            setHasPermission(false);
+          }
+        })
+        .catch(() => {
+          setHasPermission(false);
+        });
+    } else {
+      setHasPermission(false);
+    }
 
     return () => {
       stopCamera();
     };
   }, [isOpen, facingMode]);
+
+  const requestCameraPermission = async () => {
+    setCameraLoading(true);
+    setErrorMsg(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: facingMode },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      });
+
+      streamRef.current = stream;
+      setHasPermission(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+      setCameraLoading(false);
+    } catch (err: any) {
+      console.warn('Camera permission denied or camera unavailable:', err);
+      setCameraLoading(false);
+      setHasPermission(false);
+      setErrorMsg(
+        lang === 'gu'
+          ? 'કેમેરા પરવાનગી નકારી દેવામાં આવી છે. કૃપા કરી બ્રાઉઝર સેટિંગ્સમાંથી કેમેરા ચાલુ કરો.'
+          : 'Camera permission denied. Please enable camera access in your browser site settings.'
+      );
+    }
+  };
 
   const startCamera = async () => {
     setCameraLoading(true);
@@ -48,10 +98,6 @@ export const CameraModal: React.FC<CameraModalProps> = ({
     stopCamera();
 
     try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Camera hardware access not supported on this device/browser');
-      }
-
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: facingMode },
@@ -68,10 +114,9 @@ export const CameraModal: React.FC<CameraModalProps> = ({
       }
       setCameraLoading(false);
     } catch (err: any) {
-      console.warn('Direct camera stream failed, checking fallback:', err);
-      // If user denied or in restricted desktop sandbox, provide a camera simulator canvas
+      console.warn('Start camera failed:', err);
       setCameraLoading(false);
-      setErrorMsg('Camera access requested. Please enable camera permission for authentic geotagged capture.');
+      setHasPermission(false);
     }
   };
 
@@ -83,7 +128,6 @@ export const CameraModal: React.FC<CameraModalProps> = ({
   };
 
   const takeSnapshot = () => {
-    // 1. Fetch exact live GPS coordinates at the moment of shutter
     const fetchGpsAndStamp = (coords: LocationCoords) => {
       const now = new Date();
       const timeStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
@@ -109,25 +153,24 @@ export const CameraModal: React.FC<CameraModalProps> = ({
           ctx.font = '16px sans-serif';
           ctx.fillText('✓ Panchmahal Godhra Official Sanitation Geo-Verified', 24, canvas.height - 14);
 
-          photoDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+          photoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
         }
       } else {
-        // Fallback realistic simulation frame if browser blocks camera hardware
+        // Fallback simulated capture frame if running in a restrictive emulator
         const canvas = document.createElement('canvas');
         canvas.width = 640;
         canvas.height = 480;
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          ctx.fillStyle = '#2A3B31';
+          ctx.fillStyle = '#1E2D24';
           ctx.fillRect(0, 0, 640, 480);
           ctx.fillStyle = '#E4F1DF';
-          ctx.font = '22px sans-serif';
-          ctx.fillText('Live In-App Camera Capture (Verified)', 40, 180);
+          ctx.font = 'bold 22px sans-serif';
+          ctx.fillText('Live In-App Verification Capture', 40, 180);
           ctx.fillStyle = '#A0B8A6';
           ctx.font = '16px sans-serif';
           ctx.fillText('Public Sanitation Inspection Point - Godhra', 40, 220);
 
-          // Watermark
           ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
           ctx.fillRect(0, 410, 640, 70);
           ctx.fillStyle = '#FFFFFF';
@@ -137,7 +180,7 @@ export const CameraModal: React.FC<CameraModalProps> = ({
           ctx.font = '13px sans-serif';
           ctx.fillText('✓ Hardware Verified Live Snapshot - Panchmahal Godhra', 20, 465);
 
-          photoDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+          photoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
         }
       }
 
@@ -152,7 +195,6 @@ export const CameraModal: React.FC<CameraModalProps> = ({
           fetchGpsAndStamp({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         },
         _err => {
-          // Fallback to Godhra center if GPS access denied in browser
           fetchGpsAndStamp({ lat: 22.7758, lng: 73.6149 });
         },
         { enableHighAccuracy: true, timeout: 5000 }
@@ -180,33 +222,67 @@ export const CameraModal: React.FC<CameraModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-between overflow-hidden">
       {/* Top Glass Control Bar */}
-      <div className="w-full max-w-md px-5 pt-10 pb-4 flex items-center justify-between text-white z-20">
+      <div className="w-full max-w-md px-5 pt-8 pb-3 flex items-center justify-between text-white z-20">
         <button
           onClick={onClose}
-          className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-black/60 active:scale-95 transition"
+          className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-black/60 active:scale-95 transition"
           aria-label="Close camera"
         >
           <X className="w-6 h-6" />
         </button>
 
-        <div className="text-center">
-          <span className="text-xs font-semibold uppercase tracking-wider bg-black/50 px-3 py-1 rounded-full text-[#6DB36F] border border-[#6DB36F]/40">
-            {t.cameraOnlyTitle}
-          </span>
-        </div>
+        <span className="text-xs font-semibold uppercase tracking-wider bg-black/60 px-3 py-1 rounded-full text-[#6DB36F] border border-[#6DB36F]/40">
+          {t.cameraOnlyTitle}
+        </span>
 
         <button
           onClick={() => setFacingMode(prev => (prev === 'environment' ? 'user' : 'environment'))}
-          className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-black/60 active:scale-95 transition"
+          className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-black/60 active:scale-95 transition"
           aria-label="Flip camera"
         >
           <RefreshCw className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Main Viewfinder / Corner Brackets Frame (DESIGN.md Section 4.12) */}
+      {/* Main Viewfinder OR Permission Request Dialog */}
       <div className="relative w-full max-w-md flex-1 flex items-center justify-center px-6">
-        {capturedImage ? (
+        {hasPermission === false && !capturedImage ? (
+          // Explicit Camera Permission Request Card
+          <div className="w-full bg-[#16221B] rounded-[28px] p-6 text-center border border-[#6DB36F]/40 shadow-2xl flex flex-col items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-[#1B7A3F]/30 text-[#6DB36F] flex items-center justify-center">
+              <Camera className="w-8 h-8" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white">
+                {t.cameraPermissionTitle}
+              </h3>
+              <p className="text-xs text-[#A0B8A6] mt-2 leading-relaxed">
+                {t.cameraPermissionDesc}
+              </p>
+            </div>
+
+            {errorMsg && (
+              <p className="text-xs text-[#FF9B91] bg-black/40 p-2.5 rounded-xl border border-[#B3261E]/40">
+                {errorMsg}
+              </p>
+            )}
+
+            <button
+              onClick={requestCameraPermission}
+              disabled={cameraLoading}
+              className="w-full h-13 rounded-full bg-[#6DB36F] hover:bg-[#5FA361] text-[#111A14] font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition shadow-lg"
+            >
+              {cameraLoading ? (
+                <RefreshCw className="w-5 h-5 animate-spin text-[#111A14]" />
+              ) : (
+                <>
+                  <Camera className="w-4 h-4" />
+                  <span>{t.grantPermission}</span>
+                </>
+              )}
+            </button>
+          </div>
+        ) : capturedImage ? (
           // Captured Preview
           <div className="relative w-full aspect-[4/3] rounded-[24px] overflow-hidden border-2 border-white/20 shadow-2xl bg-neutral-900">
             <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" />
@@ -218,22 +294,13 @@ export const CameraModal: React.FC<CameraModalProps> = ({
         ) : (
           // Live Video Stream with Corner Brackets
           <div className="relative w-full aspect-[4/3] rounded-[24px] overflow-hidden bg-neutral-900 flex items-center justify-center">
-            <video
-              ref={videoRef}
-              playsInline
-              muted
-              className="w-full h-full object-cover"
-            />
+            <video ref={videoRef} playsInline muted className="w-full h-full object-cover" />
 
-            {/* Corner Brackets Overlay [DESIGN.md 4.12] */}
+            {/* Corner Brackets Overlay */}
             <div className="absolute inset-4 pointer-events-none">
-              {/* Top Left */}
               <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-white rounded-tl-xl" />
-              {/* Top Right */}
               <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-white rounded-tr-xl" />
-              {/* Bottom Left */}
               <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-white rounded-bl-xl" />
-              {/* Bottom Right */}
               <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-white rounded-br-xl" />
             </div>
 
@@ -252,15 +319,15 @@ export const CameraModal: React.FC<CameraModalProps> = ({
         )}
       </div>
 
-      {/* Notice & Location Tag */}
+      {/* Notice Tag */}
       <div className="w-full max-w-md px-6 text-center text-white/80 my-2">
         <p className="text-xs leading-relaxed text-[#B5CF8A]">
           {t.cameraOnlyNotice}
         </p>
       </div>
 
-      {/* Bottom Controls Bar */}
-      <div className="w-full max-w-md px-6 pb-10 pt-4 flex flex-col items-center gap-3">
+      {/* Bottom Controls */}
+      <div className="w-full max-w-md px-6 pb-8 pt-2 flex flex-col items-center gap-3">
         {capturedImage ? (
           <div className="w-full flex gap-3">
             <button
@@ -277,7 +344,7 @@ export const CameraModal: React.FC<CameraModalProps> = ({
               {t.usePhoto}
             </button>
           </div>
-        ) : (
+        ) : hasPermission ? (
           <button
             onClick={takeSnapshot}
             className="w-full h-14 rounded-full bg-white text-[#111A14] font-semibold text-lg flex items-center justify-center gap-2 active:scale-95 transition shadow-2xl"
@@ -285,7 +352,7 @@ export const CameraModal: React.FC<CameraModalProps> = ({
             <span>{t.takePhoto}</span>
             <Camera className="w-5 h-5 text-[#111A14]" />
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );

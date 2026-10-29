@@ -5,17 +5,15 @@ import { ContourCard } from './ContourCard';
 import { CivicHabitTips } from './CivicHabitTips';
 import { GeoService, LocationCoords } from '../services/simulationService';
 import { CONSTANTS } from '../core/constants';
-import { StorageService } from '../services/storageService';
 import {
   Camera,
   AlertOctagon,
-  CheckCircle,
-  Truck,
   LocateFixed,
-  Battery,
-  Gauge,
+  Maximize2,
+  Minimize2,
   Sparkles,
-  ArrowRight
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import L from 'leaflet';
 
@@ -47,10 +45,12 @@ export const MapShell: React.FC<MapShellProps> = ({
   const userMarkerRef = useRef<L.Marker | null>(null);
   const wardCircleRef = useRef<L.Circle | null>(null);
 
+  // Fullscreen map mode state per user requirement
+  const [isFullscreenMap, setIsFullscreenMap] = useState(false);
+
   // Active van for this ward's route
   const activeVan = vans.find(v => v.routeId === ward.routeId && v.status === 'on_shift') || vans[0];
 
-  // Calculate ETA
   const vanDistance = activeVan
     ? GeoService.getDistanceMeters(activeVan.lastLocation, userLocation || ward.center)
     : 0;
@@ -70,7 +70,6 @@ export const MapShell: React.FC<MapShellProps> = ({
         attributionControl: false,
       });
 
-      // OSM Tiles (DESIGN.md Section 4.10)
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
       }).addTo(map);
@@ -93,13 +92,17 @@ export const MapShell: React.FC<MapShellProps> = ({
       fillOpacity: 0.12,
     }).addTo(map);
 
-    // Initial center on ward
     map.setView([ward.center.lat, ward.center.lng], CONSTANTS.DEFAULT_ZOOM);
-
-    return () => {
-      // Keep map alive or clean up
-    };
   }, [ward]);
+
+  // Invalidate map size when fullscreen toggled
+  useEffect(() => {
+    if (leafletMapRef.current) {
+      setTimeout(() => {
+        leafletMapRef.current?.invalidateSize();
+      }, 300);
+    }
+  }, [isFullscreenMap]);
 
   // Update Van Marker with custom Animated Icon & ETA Bubble
   useEffect(() => {
@@ -108,7 +111,6 @@ export const MapShell: React.FC<MapShellProps> = ({
 
     const vanPos: [number, number] = [activeVan.lastLocation.lat, activeVan.lastLocation.lng];
 
-    // HTML for custom Van Marker (DESIGN.md Section 4.10)
     const vanIconHtml = `
       <div class="relative flex flex-col items-center">
         <!-- ETA Bubble -->
@@ -180,73 +182,121 @@ export const MapShell: React.FC<MapShellProps> = ({
 
   return (
     <div className="relative w-full h-full flex flex-col overflow-hidden">
-      {/* 1. Full Bleed Map */}
+      {/* 1. Full Bleed Map Canvas */}
       <div ref={mapContainerRef} className="absolute inset-0 z-0 bg-[#E9F1E6]" />
 
-      {/* Recenter Button on Map */}
-      <button
-        onClick={handleRecenter}
-        className="absolute right-4 bottom-[380px] z-20 w-12 h-12 rounded-full bg-white text-[#111A14] shadow-elev2 border border-[#DCE5D9] flex items-center justify-center active:scale-95 transition"
-        aria-label="Recenter van"
+      {/* Floating Map Controls (Right Side) */}
+      <div
+        className={`absolute right-4 z-20 flex flex-col gap-2 transition-all duration-300 ${
+          isFullscreenMap ? 'bottom-28' : 'bottom-[370px]'
+        }`}
       >
-        <LocateFixed className="w-5 h-5 text-[#1B7A3F]" />
-      </button>
+        {/* Fullscreen Map Toggle Button */}
+        <button
+          onClick={() => setIsFullscreenMap(prev => !prev)}
+          className="w-12 h-12 rounded-full bg-white text-[#111A14] shadow-elev2 border border-[#DCE5D9] flex items-center justify-center active:scale-95 transition"
+          title={isFullscreenMap ? t.exitFullscreen : t.fullscreenMap}
+        >
+          {isFullscreenMap ? (
+            <Minimize2 className="w-5 h-5 text-[#1B7A3F]" />
+          ) : (
+            <Maximize2 className="w-5 h-5 text-[#1B7A3F]" />
+          )}
+        </button>
 
-      {/* 2. Draggable Bottom Sheet [DESIGN.md Section 3.3 & 4.11] */}
-      <div className="absolute left-0 right-0 bottom-0 z-10 max-h-[75vh] bg-white rounded-t-[32px] shadow-elev3 border-t border-[#DCE5D9] overflow-y-auto flex flex-col px-5 pt-3 pb-28">
-        {/* Grab Handle */}
-        <div className="w-10 h-1 bg-[#74897A]/40 rounded-full mx-auto mb-3" />
+        {/* Recenter Van Button */}
+        <button
+          onClick={handleRecenter}
+          className="w-12 h-12 rounded-full bg-white text-[#111A14] shadow-elev2 border border-[#DCE5D9] flex items-center justify-center active:scale-95 transition"
+          aria-label="Recenter van"
+        >
+          <LocateFixed className="w-5 h-5 text-[#1B7A3F]" />
+        </button>
+      </div>
 
-        {/* Contour Card for Van ETA */}
-        <ContourCard
-          seed={ward.id.length * 17}
-          label={t.etaTitle}
-          heroValue={isNear ? (lang === 'gu' ? 'નજીક છે' : 'Arrived') : etaMinutes}
-          heroUnit={isNear ? '' : t.etaMinutes}
-          subtitle={
-            isNear
-              ? t.arrived
-              : activeVan
-              ? `${activeVan.plateNo} • ${activeVan.lastLocation.speedKmph} km/h • ${activeVan.batteryPct}% ${t.battery}`
-              : t.noVanOnRoute
-          }
-          badge={activeVan ? activeVan.plateNo : 'ON ROUTE'}
-          onAction={onOpenPostCollection}
-          actionIcon={<Sparkles className="w-5 h-5 text-[#111A14]" />}
-        />
-
-        {/* Primary Action: Report a Problem [DESIGN.md 4.1] */}
-        <div className="flex flex-col gap-2.5 mt-4">
+      {/* 2. Collapsible Bottom Sheet */}
+      {isFullscreenMap ? (
+        // Minimal Floating Bottom Bar in Fullscreen Mode
+        <div className="absolute left-4 right-4 bottom-24 z-10 bg-white/90 backdrop-blur-md p-3 rounded-full shadow-elev3 border border-[#DCE5D9] flex items-center justify-between pointer-events-auto">
+          <div className="flex items-center gap-2 pl-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#1B7A3F] animate-ping" />
+            <span className="text-xs font-bold text-[#14201A]">
+              {isNear ? t.arrived : `${t.etaTitle}: ${etaMinutes} ${t.etaMinutes}`}
+            </span>
+          </div>
           <button
-            onClick={onOpenReport}
-            className="w-full h-14 rounded-full bg-[#111A14] hover:bg-black text-white font-bold text-base flex items-center justify-center gap-2.5 shadow-xl active:scale-[0.98] transition"
+            onClick={() => setIsFullscreenMap(false)}
+            className="px-4 py-2 rounded-full bg-[#111A14] text-white text-xs font-bold flex items-center gap-1.5 active:scale-95 transition"
           >
-            <span>{t.reportProblem}</span>
-            <Camera className="w-5 h-5 text-white" />
+            <ChevronUp className="w-4 h-4" />
+            <span>{t.exitFullscreen}</span>
           </button>
-
-          {/* Secondary Action: Van didn't arrive */}
+        </div>
+      ) : (
+        // Full Draggable / Scrollable Bottom Sheet
+        <div className="absolute left-0 right-0 bottom-0 z-10 max-h-[72vh] bg-white rounded-t-[32px] shadow-elev3 border-t border-[#DCE5D9] overflow-y-auto flex flex-col px-5 pt-3 pb-28 transition-all duration-300">
+          {/* Top Grab Handle with Collapse Shortcut */}
           <button
-            onClick={onReportMissedVan}
-            disabled={hasReportedMissed}
-            className={`w-full h-12 rounded-full border text-xs font-bold flex items-center justify-center gap-2 transition active:scale-95 ${
-              hasReportedMissed
-                ? 'bg-[#E4F1DF] text-[#1B7A3F] border-[#1B7A3F]/30'
-                : 'bg-[#FFEBD9] hover:bg-[#FEDAC0] text-[#B34A0B] border-[#F0873A]/40'
-            }`}
+            onClick={() => setIsFullscreenMap(true)}
+            className="w-full flex flex-col items-center pb-2 cursor-pointer group"
+            title={t.fullscreenMap}
           >
-            <AlertOctagon className="w-4 h-4" />
-            <span>
-              {hasReportedMissed ? t.vanReported : t.vanDidNotArrive}
+            <div className="w-10 h-1 bg-[#74897A]/40 rounded-full group-hover:bg-[#1B7A3F] transition mb-1" />
+            <span className="text-[10px] text-[#74897A] font-semibold flex items-center gap-1 group-hover:text-[#1B7A3F]">
+              <ChevronDown className="w-3.5 h-3.5" />
+              <span>{t.fullscreenMap}</span>
             </span>
           </button>
-        </div>
 
-        {/* Civic Habits & Reminders Carousel */}
-        <div className="mt-4">
-          <CivicHabitTips lang={lang} />
+          {/* Contour Card for Van ETA (Battery removed per user request) */}
+          <ContourCard
+            seed={ward.id.length * 17}
+            label={t.etaTitle}
+            heroValue={isNear ? (lang === 'gu' ? 'નજીક છે' : 'Arrived') : etaMinutes}
+            heroUnit={isNear ? '' : t.etaMinutes}
+            subtitle={
+              isNear
+                ? t.arrived
+                : activeVan
+                ? `${activeVan.plateNo} • ${activeVan.lastLocation.speedKmph} km/h • Godhra Swachhata Route`
+                : t.noVanOnRoute
+            }
+            badge={activeVan ? activeVan.plateNo : 'ON ROUTE'}
+            onAction={onOpenPostCollection}
+            actionIcon={<Sparkles className="w-5 h-5 text-[#111A14]" />}
+          />
+
+          {/* Primary Action: Report a Problem */}
+          <div className="flex flex-col gap-2.5 mt-4">
+            <button
+              onClick={onOpenReport}
+              className="w-full h-14 rounded-full bg-[#111A14] hover:bg-black text-white font-bold text-base flex items-center justify-center gap-2.5 shadow-xl active:scale-[0.98] transition"
+            >
+              <span>{t.reportProblem}</span>
+              <Camera className="w-5 h-5 text-white" />
+            </button>
+
+            {/* Secondary Action: Van didn't arrive */}
+            <button
+              onClick={onReportMissedVan}
+              disabled={hasReportedMissed}
+              className={`w-full h-12 rounded-full border text-xs font-bold flex items-center justify-center gap-2 transition active:scale-95 ${
+                hasReportedMissed
+                  ? 'bg-[#E4F1DF] text-[#1B7A3F] border-[#1B7A3F]/30'
+                  : 'bg-[#FFEBD9] hover:bg-[#FEDAC0] text-[#B34A0B] border-[#F0873A]/40'
+              }`}
+            >
+              <AlertOctagon className="w-4 h-4" />
+              <span>{hasReportedMissed ? t.vanReported : t.vanDidNotArrive}</span>
+            </button>
+          </div>
+
+          {/* Civic Habits & Reminders Carousel */}
+          <div className="mt-4">
+            <CivicHabitTips lang={lang} />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

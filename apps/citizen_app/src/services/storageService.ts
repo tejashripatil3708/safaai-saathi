@@ -1,12 +1,12 @@
-import { Complaint, CitizenCollectionFeedback, Rating } from '../types';
+import { Complaint, CitizenCollectionFeedback, CitizenAddress } from '../types';
 
 const STORAGE_KEYS = {
   DEVICE_ID: 'safai_sathi_device_id',
   WARD_ID: 'safai_sathi_selected_ward_id',
+  CITIZEN_ADDRESS: 'safai_sathi_citizen_address_text',
   LANGUAGE: 'safai_sathi_language',
   PHONE: 'safai_sathi_verified_phone',
   COMPLAINTS: 'safai_sathi_my_complaints',
-  OFFLINE_QUEUE: 'safai_sathi_offline_complaint_queue',
   MISSED_REPORTS: 'safai_sathi_missed_reports_by_date',
   FEEDBACK: 'safai_sathi_collection_feedback',
 };
@@ -29,9 +29,20 @@ export class StorageService {
     localStorage.setItem(STORAGE_KEYS.WARD_ID, wardId);
   }
 
+  static getCitizenAddress(): string {
+    return localStorage.getItem(STORAGE_KEYS.CITIZEN_ADDRESS) || 'Polan Bazar, Godhra';
+  }
+
+  static setCitizenAddress(addressText: string, wardId?: string): void {
+    localStorage.setItem(STORAGE_KEYS.CITIZEN_ADDRESS, addressText);
+    if (wardId) {
+      localStorage.setItem(STORAGE_KEYS.WARD_ID, wardId);
+    }
+  }
+
   static getLanguage(): 'gu' | 'en' {
     const lang = localStorage.getItem(STORAGE_KEYS.LANGUAGE);
-    return lang === 'en' ? 'en' : 'gu'; // Default to Gujarati as specified
+    return lang === 'en' ? 'en' : 'gu';
   }
 
   static setLanguage(lang: 'gu' | 'en'): void {
@@ -58,7 +69,6 @@ export class StorageService {
 
   static saveComplaint(complaint: Complaint): void {
     const complaints = this.getComplaints();
-    // Add to top
     const existingIndex = complaints.findIndex(c => c.id === complaint.id);
     if (existingIndex >= 0) {
       complaints[existingIndex] = complaint;
@@ -66,6 +76,9 @@ export class StorageService {
       complaints.unshift(complaint);
     }
     localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
+
+    // Also trigger mock sync for admin website if open in another tab
+    window.dispatchEvent(new CustomEvent('safai_sathi_new_complaint', { detail: complaint }));
   }
 
   static updateComplaintStatus(complaintId: string, status: Complaint['status'], escalationLevel?: number): void {

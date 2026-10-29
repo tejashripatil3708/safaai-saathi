@@ -56,7 +56,7 @@ service cloud.firestore {
       
       // Citizens can create new complaints
       allow create: if isAuthenticated()
-        && request.resource.data.category in ['garbage_dump', 'open_gutter', 'missed_collection', 'other']
+        && request.resource.data.category in ['garbage_dump', 'open_gutter', 'missed_collection', 'dead_animal', 'public_toilet', 'construction_debris', 'hazardous_waste', 'other']
         && request.resource.data.status == 'received'
         && request.resource.data.escalationLevel == 0
         && request.resource.data.deviceId == request.auth.uid;

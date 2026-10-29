@@ -100,6 +100,28 @@ export const mergeDuplicates = functions.firestore
         }
       }
     }
+
+    // Dispatch real-time alert to Municipal Admins & Ward Inspector
+    try {
+      const topic = data.wardId ? `ward_staff_${data.wardId}` : 'admin_all';
+      await admin.messaging().send({
+        topic: 'admin_all',
+        notification: {
+          title: `🚨 New Civic Ticket: ${data.ticketId || snap.id}`,
+          body: `${data.category}: ${data.address || 'Godhra'} - Requires inspection`,
+        },
+        data: {
+          complaintId: snap.id,
+          ticketId: data.ticketId || snap.id,
+          wardId: data.wardId || '',
+          category: data.category || '',
+          status: 'received',
+        },
+      });
+    } catch (e) {
+      console.warn('Admin notification push deferred:', e);
+    }
+
     return null;
   });
 

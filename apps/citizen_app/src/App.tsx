@@ -111,6 +111,7 @@ export const App: React.FC = () => {
       ticketId: `PMH-${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${new Date().getDate().toString().padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`,
       deviceId: StorageService.getDeviceId(),
       category: 'missed_collection',
+      address: StorageService.getCitizenAddress(),
       photoUrl: '',
       location: userLocation || selectedWard.center,
       wardId: selectedWard.id,
@@ -121,6 +122,7 @@ export const App: React.FC = () => {
       assignedPhone: selectedWard.inspectorPhone,
       escalationLevel: 0,
       note: 'Doorstep collection missed for today.',
+      slaDeadline: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
     };
 
     StorageService.saveComplaint(missedComplaint);

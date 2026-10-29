@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Phone, Clock, MapPin, ShieldAlert, CheckCircle2, MessageSquare, AlertTriangle } from 'lucide-react';
+import { X, Phone, Clock, MapPin, AlertTriangle, ShieldCheck, FileText, CheckCircle2 } from 'lucide-react';
 import { Complaint, Ward } from '../types';
 import { Language, translations } from '../core/localization';
 import { StatusChip } from './StatusChip';
@@ -24,7 +24,8 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
   const ward = SEED_WARDS.find(w => w.id === complaint.wardId) || SEED_WARDS[0];
   const categoryName = (t.categories as any)[complaint.category] || complaint.category;
 
-  const isEscalatedOrOverdue =
+  // Has it breached SLA (escalated or > 24 hours)?
+  const isSlaBreached =
     complaint.status === 'escalated' ||
     complaint.escalationLevel > 0 ||
     Date.now() - new Date(complaint.createdAt).getTime() > 24 * 3600 * 1000;
@@ -49,7 +50,7 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
               {complaint.ticketId}
             </span>
             <h3 className="text-base font-bold text-[#14201A] mt-1">
-              {categoryName}
+              {complaint.categoryCustomTitle || categoryName}
             </h3>
           </div>
           <button
@@ -75,6 +76,28 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
             </div>
           </div>
 
+          {/* Address / Location Details */}
+          {complaint.address && (
+            <div className="p-3 bg-[#E9F1E6] rounded-2xl flex items-start gap-2 text-xs text-[#14201A]">
+              <MapPin className="w-4 h-4 text-[#1B7A3F] shrink-0 mt-0.5" />
+              <div>
+                <strong>{lang === 'gu' ? 'સ્થળ / સરનામું:' : 'Location Address:'}</strong>
+                <p className="mt-0.5 text-[#566259]">{complaint.address}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Description if provided */}
+          {complaint.description && (
+            <div className="p-3 bg-[#F3F6F2] rounded-2xl text-xs text-[#14201A] border border-[#DCE5D9]">
+              <div className="flex items-center gap-1.5 font-bold text-[#1B7A3F] mb-1">
+                <FileText className="w-3.5 h-3.5" />
+                <span>{lang === 'gu' ? 'વિગતવાર માહિતી:' : 'Detailed Description:'}</span>
+              </div>
+              <p className="text-[#566259] leading-relaxed">{complaint.description}</p>
+            </div>
+          )}
+
           {/* Captured Live Photo */}
           {complaint.photoUrl && (
             <div className="rounded-2xl overflow-hidden border border-[#DCE5D9] shadow-sm relative">
@@ -88,19 +111,12 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
                   <MapPin className="w-3.5 h-3.5 text-[#6DB36F]" />
                   {complaint.location.lat.toFixed(4)}, {complaint.location.lng.toFixed(4)}
                 </span>
-                <span className="text-[#6DB36F] font-semibold">Geo-Verified</span>
+                <span className="text-[#6DB36F] font-semibold">Live GPS Verified</span>
               </div>
             </div>
           )}
 
-          {/* Note if any */}
-          {complaint.note && (
-            <div className="p-3 bg-[#E9F1E6] rounded-xl text-xs text-[#14201A]">
-              <strong>{lang === 'gu' ? 'વિગત:' : 'Note:'}</strong> {complaint.note}
-            </div>
-          )}
-
-          {/* Status Timeline */}
+          {/* Status Progression Timeline */}
           <div className="flex flex-col gap-3">
             <h4 className="text-xs font-bold text-[#14201A] uppercase tracking-wider">
               {lang === 'gu' ? 'નિવારણ પ્રગતિ ટાઇમલાઇન' : 'Resolution Progress Timeline'}
@@ -124,7 +140,7 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
                 />
                 <p className="text-xs font-bold text-[#14201A]">{t.timeline.step2}</p>
                 <p className="text-[11px] text-[#566259]">
-                  {ward.inspectorName} ({ward.inspectorPhone})
+                  {lang === 'gu' ? 'સ્થાનિક સફાઈ નિરીક્ષકને સોંપાયેલ' : 'Assigned to Ward Sanitation Staff'}
                 </p>
               </div>
 
@@ -137,7 +153,7 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
                 />
                 <p className="text-xs font-bold text-[#14201A]">{t.timeline.step3}</p>
                 <p className="text-[11px] text-[#566259]">
-                  {lang === 'gu' ? 'વોર્ડ સફાઈ સ્ટાફ કાર્યવાહી' : 'Field sanitation worker dispatched'}
+                  {lang === 'gu' ? 'સ્થળ સફાઈ અને નિકાલ કામગીરી' : 'Sanitation team action underway'}
                 </p>
               </div>
 
@@ -158,8 +174,8 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
             </div>
           </div>
 
-          {/* User Requested: Authority Escalation Contacts Display when ticket is not resolved past SLA */}
-          {isEscalatedOrOverdue && (
+          {/* Authority Contacts: ONLY REVEALED IF TICKET IS NOT RESOLVED WITHIN SLA (24h/escalated) */}
+          {isSlaBreached ? (
             <div className="p-4 rounded-[24px] bg-[#FFEBD9] border-2 border-[#F0873A] flex flex-col gap-3">
               <div className="flex items-start gap-2.5">
                 <AlertTriangle className="w-5 h-5 text-[#B34A0B] shrink-0 mt-0.5" />
@@ -187,23 +203,16 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
                 </a>
               </div>
             </div>
-          )}
-
-          {/* Ward Inspector Contact */}
-          <div className="p-3.5 rounded-2xl bg-[#F3F6F2] border border-[#DCE5D9] flex items-center justify-between">
-            <div>
-              <p className="text-[11px] text-[#566259] font-medium">
-                {lang === 'gu' ? 'વોર્ડ ઇન્સ્પેક્ટર' : 'Ward Sanitation Inspector'}
-              </p>
-              <p className="text-xs font-bold text-[#14201A]">{ward.inspectorName}</p>
+          ) : (
+            <div className="p-3 bg-[#E4F1DF] rounded-2xl flex items-center gap-2 text-xs text-[#1B7A3F]">
+              <ShieldCheck className="w-4 h-4 shrink-0" />
+              <span>
+                {lang === 'gu'
+                  ? 'ફરિયાદ ૨૪ કલાકની સમયમર્યાદામાં ઉકેલવા સ્ટાફને સૂચના અપાઈ છે.'
+                  : 'Ticket is currently within the active 24-hour SLA window.'}
+              </span>
             </div>
-            <a
-              href={`tel:${ward.inspectorPhone.replace(/\s+/g, '')}`}
-              className="w-10 h-10 rounded-full bg-white border border-[#74897A] flex items-center justify-center text-[#14201A] active:scale-95 transition"
-            >
-              <Phone className="w-4 h-4 text-[#1B7A3F]" />
-            </a>
-          </div>
+          )}
         </div>
       </div>
     </div>

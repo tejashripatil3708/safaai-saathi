@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, X, Check, AlertCircle, Send, MapPin, ShieldCheck, Sparkles } from 'lucide-react';
+import { Camera, X, Check, AlertCircle, Send, MapPin, ShieldCheck, FileText, MapPinned } from 'lucide-react';
 import { ComplaintCategory, Complaint } from '../types';
 import { Language, translations } from '../core/localization';
 import { CameraModal } from './CameraModal';
@@ -28,9 +28,12 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
   const t = translations[lang];
 
   const [category, setCategory] = useState<ComplaintCategory>('garbage_dump');
+  const [customTitle, setCustomTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [address, setAddress] = useState(StorageService.getCitizenAddress());
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [capturedLocation, setCapturedLocation] = useState<LocationCoords | null>(null);
-  const [note, setNote] = useState('');
+
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isOtpOpen, setIsOtpOpen] = useState(false);
   const [createdComplaint, setCreatedComplaint] = useState<Complaint | null>(null);
@@ -48,13 +51,23 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
     setError(null);
   };
 
-  const handleSubmitAttempt = () => {
+  const handleInitialSubmit = () => {
     if (!photoUrl || !capturedLocation) {
       setError(lang === 'gu' ? 'કૃપા કરી લાઈવ કેમેરાથી ફોટો પાડો' : 'Please take a live photo via camera first');
       return;
     }
 
-    // Require OTP if phone is not verified yet
+    if (!address.trim()) {
+      setError(lang === 'gu' ? 'કૃપા કરી ઘર/વિસ્તારનું સરનામું દાખલ કરો' : 'Please provide the street/area address');
+      return;
+    }
+
+    if (category === 'other' && !customTitle.trim()) {
+      setError(lang === 'gu' ? 'કૃપા કરી સમસ્યાનું નામ લખો' : 'Please specify the exact issue title');
+      return;
+    }
+
+    // Check if phone number is verified; if not, enforce OTP verification first!
     const verifiedPhone = StorageService.getVerifiedPhone();
     if (!verifiedPhone) {
       setIsOtpOpen(true);
@@ -71,12 +84,18 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
     const ticketId = GeoService.generateTicketId();
     const resolvedWard = GeoService.findWardByLocation(capturedLocation || currentWard.center) || currentWard;
 
+    // Save citizen address for future convenience
+    StorageService.setCitizenAddress(address.trim(), resolvedWard.id);
+
     const newComplaint: Complaint = {
       id: 'cmp_' + Date.now().toString(36),
       ticketId,
       deviceId: StorageService.getDeviceId(),
       phone,
       category,
+      categoryCustomTitle: customTitle.trim() || undefined,
+      description: description.trim() || undefined,
+      address: address.trim(),
       photoUrl: photoUrl!,
       location: capturedLocation || currentWard.center,
       wardId: resolvedWard.id,
@@ -86,7 +105,8 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
       assignedName: resolvedWard.inspectorName,
       assignedPhone: resolvedWard.inspectorPhone,
       escalationLevel: 0,
-      note: note.trim() || undefined,
+      note: description.trim() || undefined,
+      slaDeadline: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
     };
 
     setTimeout(() => {
@@ -95,7 +115,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
       setIsSubmitting(false);
       setCreatedComplaint(newComplaint);
 
-      // Trigger celebratory confetti
+      // Celebratory feedback
       confetti({
         particleCount: 80,
         spread: 60,
@@ -103,7 +123,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
         colors: ['#1B7A3F', '#6DB36F', '#F0873A', '#B5CF8A'],
       });
 
-      // Open WhatsApp Dispatch dialog immediately
+      // Prompt opening WhatsApp ticket immediately
       setIsWhatsAppOpen(true);
     }, 600);
   };
@@ -119,7 +139,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
                 {t.reportProblem}
               </h3>
               <p className="text-xs text-[#566259]">
-                {lang === 'gu' ? currentWard.nameGu : currentWard.name}
+                {address || (lang === 'gu' ? currentWard.nameGu : currentWard.name)}
               </p>
             </div>
             <button
@@ -130,12 +150,12 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
             </button>
           </div>
 
-          {/* Form */}
+          {/* Form Content */}
           <div className="p-6 flex flex-col gap-5">
-            {/* 1. Category Chips (PRD 0.3) */}
+            {/* 1. Category Grid */}
             <div>
               <label className="block text-xs font-bold text-[#14201A] uppercase tracking-wider mb-2.5">
-                {t.category}
+                {t.category} *
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {Object.entries(t.categories).map(([catKey, catLabel]) => {
@@ -145,29 +165,75 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
                       key={catKey}
                       type="button"
                       onClick={() => setCategory(catKey as ComplaintCategory)}
-                      className={`min-h-[48px] px-3.5 py-2.5 rounded-full text-xs font-semibold text-left flex items-center justify-between transition active:scale-95 ${
+                      className={`min-h-[46px] px-3 py-2 rounded-[18px] text-[11px] font-semibold text-left flex items-center justify-between transition active:scale-95 ${
                         isSelected
                           ? 'bg-[#F0873A] text-[#111A14] ring-2 ring-[#111A14] font-bold shadow-sm'
                           : 'bg-[#F3F6F2] text-[#14201A] border border-[#DCE5D9] hover:bg-[#E9F1E6]'
                       }`}
                     >
-                      <span className="truncate">{catLabel}</span>
-                      {isSelected && <Check className="w-4 h-4 shrink-0 ml-1 text-[#111A14]" />}
+                      <span className="leading-tight line-clamp-2">{catLabel}</span>
+                      {isSelected && <Check className="w-3.5 h-3.5 shrink-0 ml-1 text-[#111A14]" />}
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* 2. Camera-Only Viewfinder Capture */}
+            {/* If 'Other' or any category: Allow exact issue title */}
+            {category === 'other' && (
+              <div>
+                <label className="block text-xs font-bold text-[#14201A] uppercase tracking-wider mb-2">
+                  {t.exactIssueLabel} *
+                </label>
+                <input
+                  type="text"
+                  value={customTitle}
+                  onChange={e => setCustomTitle(e.target.value)}
+                  placeholder={t.exactIssuePlaceholder}
+                  className="w-full h-12 px-4 rounded-[18px] bg-white border-2 border-[#74897A] focus:border-[#1B7A3F] focus:outline-none text-xs text-[#14201A]"
+                />
+              </div>
+            )}
+
+            {/* 2. Optional Detailed Description */}
+            <div>
+              <label className="block text-xs font-bold text-[#14201A] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-[#1B7A3F]" />
+                <span>{t.detailedDescLabel}</span>
+              </label>
+              <textarea
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder={t.detailedDescPlaceholder}
+                rows={2}
+                className="w-full p-3.5 rounded-[18px] bg-white border-2 border-[#74897A] focus:border-[#1B7A3F] focus:outline-none text-xs text-[#14201A] placeholder:text-[#566259]"
+              />
+            </div>
+
+            {/* 3. Address / Landmark Input */}
+            <div>
+              <label className="block text-xs font-bold text-[#14201A] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <MapPinned className="w-3.5 h-3.5 text-[#1B7A3F]" />
+                <span>{t.myAddressTitle} *</span>
+              </label>
+              <input
+                type="text"
+                value={address}
+                onChange={e => setAddress(e.target.value)}
+                placeholder={t.addressPlaceholder}
+                className="w-full h-12 px-4 rounded-[18px] bg-white border-2 border-[#74897A] focus:border-[#1B7A3F] focus:outline-none text-xs text-[#14201A]"
+              />
+            </div>
+
+            {/* 4. Live Camera Viewfinder Snapshot */}
             <div>
               <label className="block text-xs font-bold text-[#14201A] uppercase tracking-wider mb-2">
-                {t.takePhoto} *
+                {t.takePhoto} (Live Camera Only) *
               </label>
 
               {photoUrl ? (
                 <div className="relative rounded-[24px] overflow-hidden border-2 border-[#1B7A3F] shadow-md aspect-[16/10] bg-neutral-900">
-                  <img src={photoUrl} alt="Inspection Photo" className="w-full h-full object-cover" />
+                  <img src={photoUrl} alt="Live Inspection" className="w-full h-full object-cover" />
                   <div className="absolute top-2 left-2 bg-black/75 backdrop-blur-md px-3 py-1 rounded-full text-[11px] text-white flex items-center gap-1.5">
                     <Check className="w-3.5 h-3.5 text-[#6DB36F]" />
                     <span>{t.verified}</span>
@@ -184,33 +250,19 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsCameraOpen(true)}
-                  className="w-full h-36 rounded-[24px] border-2 border-dashed border-[#74897A] hover:border-[#1B7A3F] bg-[#F3F6F2] hover:bg-[#E4F1DF]/40 flex flex-col items-center justify-center gap-2 text-[#14201A] transition active:scale-[0.98]"
+                  className="w-full h-32 rounded-[24px] border-2 border-dashed border-[#74897A] hover:border-[#1B7A3F] bg-[#F3F6F2] hover:bg-[#E4F1DF]/40 flex flex-col items-center justify-center gap-2 text-[#14201A] transition active:scale-[0.98]"
                 >
-                  <div className="w-12 h-12 rounded-full bg-[#1B7A3F] text-white flex items-center justify-center shadow-sm">
-                    <Camera className="w-6 h-6" />
+                  <div className="w-11 h-11 rounded-full bg-[#1B7A3F] text-white flex items-center justify-center shadow-sm">
+                    <Camera className="w-5 h-5" />
                   </div>
-                  <span className="text-sm font-bold text-[#1B7A3F]">
-                    {lang === 'gu' ? 'લાઈવ કેમેરાથી ફોટો પાડો' : 'Open Live Camera'}
+                  <span className="text-xs font-bold text-[#1B7A3F]">
+                    {lang === 'gu' ? 'લાઈવ કેમેરા પરવાનગી અને ફોટો' : 'Request Camera & Take Live Photo'}
                   </span>
-                  <span className="text-[11px] text-[#566259]">
-                    {lang === 'gu' ? 'ગેલેરી ફોટો માન્ય નથી' : 'Strict camera capture only (no gallery)'}
+                  <span className="text-[10px] text-[#566259]">
+                    {lang === 'gu' ? 'ગેલેરી ફોટો સ્વીકાર્ય નથી' : 'Gallery upload strictly disabled'}
                   </span>
                 </button>
               )}
-            </div>
-
-            {/* 3. Note */}
-            <div>
-              <label className="block text-xs font-bold text-[#14201A] uppercase tracking-wider mb-2">
-                {lang === 'gu' ? 'લેન્ડમાર્ક / સરનામું' : 'Landmark / Address details'}
-              </label>
-              <textarea
-                value={note}
-                onChange={e => setNote(e.target.value)}
-                placeholder={t.notePlaceholder}
-                rows={2}
-                className="w-full p-3.5 rounded-[20px] bg-white border-2 border-[#74897A] focus:border-[#1B7A3F] focus:outline-none text-xs text-[#14201A] placeholder:text-[#566259]"
-              />
             </div>
 
             {/* Error Message */}
@@ -221,24 +273,24 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
               </div>
             )}
 
-            {/* Verification badge */}
+            {/* Anti-fraud reassurance */}
             <div className="p-3 bg-[#E4F1DF] rounded-2xl flex items-center gap-2 text-xs text-[#1B7A3F]">
               <ShieldCheck className="w-4 h-4 shrink-0" />
               <span>
                 {lang === 'gu'
-                  ? 'ઓટોમેટિક જીપીએસ અને ટાઈમસ્ટેમ્પ દ્વારા માન્યતા પ્રાપ્ત થશે.'
-                  : 'Tamper-proof hardware GPS & timestamp are recorded.'}
+                  ? 'ફરિયાદ સીધી પંચમહાલ એડમિન પોર્ટલ અને વોર્ડ સ્ટાફને મોકલાશે.'
+                  : 'Tickets route directly to the Municipal Administrative Dashboard.'}
               </span>
             </div>
 
-            {/* Submit Pill CTA (DESIGN.md 4.1) */}
+            {/* Submit Pill CTA */}
             <button
-              onClick={handleSubmitAttempt}
+              onClick={handleInitialSubmit}
               disabled={isSubmitting}
-              className="w-full h-14 rounded-full bg-[#111A14] text-white font-bold text-base flex items-center justify-center gap-2 shadow-xl active:scale-95 transition disabled:opacity-50"
+              className="w-full h-14 rounded-full bg-[#111A14] hover:bg-black text-white font-bold text-base flex items-center justify-center gap-2 shadow-xl active:scale-95 transition disabled:opacity-50"
             >
               <Send className="w-5 h-5 text-white" />
-              <span>{isSubmitting ? (lang === 'gu' ? 'નોંધાઈ રહ્યું છે...' : 'Registering...') : t.submit}</span>
+              <span>{isSubmitting ? (lang === 'gu' ? 'નોંધાઈ રહ્યું છે...' : 'Submitting...') : t.submit}</span>
             </button>
           </div>
         </div>
@@ -252,7 +304,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
         lang={lang}
       />
 
-      {/* Phone OTP Modal */}
+      {/* Mandatory Phone OTP Verification Modal */}
       <OtpModal
         isOpen={isOtpOpen}
         onClose={() => setIsOtpOpen(false)}
