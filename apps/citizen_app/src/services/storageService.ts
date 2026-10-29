@@ -244,9 +244,33 @@ export class StorageService {
     localStorage.setItem(STORAGE_KEYS.MISSED_REPORTS, JSON.stringify(records));
   }
 
+  static isGarbageCollectedToday(wardId: string): boolean {
+    const today = this.getTodayKey();
+    const data = localStorage.getItem(STORAGE_KEYS.FEEDBACK);
+    if (!data) return false;
+    try {
+      const list = JSON.parse(data);
+      return list.some((item: CitizenCollectionFeedback) => item.wardId === wardId && item.date === today && item.collectionStatus === 'collected');
+    } catch {
+      return false;
+    }
+  }
+
+  static resetGarbageCollectedToday(wardId: string): void {
+    const today = this.getTodayKey();
+    const data = localStorage.getItem(STORAGE_KEYS.FEEDBACK);
+    if (!data) return;
+    try {
+      let list = JSON.parse(data);
+      list = list.filter((item: CitizenCollectionFeedback) => !(item.wardId === wardId && item.date === today && item.collectionStatus === 'collected'));
+      localStorage.setItem(STORAGE_KEYS.FEEDBACK, JSON.stringify(list));
+      window.dispatchEvent(new CustomEvent('safai_sathi_collection_updated'));
+    } catch {}
+  }
+
   static saveFeedback(feedback: CitizenCollectionFeedback): void {
     const data = localStorage.getItem(STORAGE_KEYS.FEEDBACK);
-    let list: CitizenCollectionFeedback[] = [];
+    let list = [];
     if (data) {
       try {
         list = JSON.parse(data);
@@ -256,6 +280,7 @@ export class StorageService {
     }
     list.unshift(feedback);
     localStorage.setItem(STORAGE_KEYS.FEEDBACK, JSON.stringify(list));
+    window.dispatchEvent(new CustomEvent('safai_sathi_collection_updated', { detail: feedback }));
   }
 
   static hasAnsweredFeedbackToday(wardId: string): boolean {

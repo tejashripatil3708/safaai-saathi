@@ -15,8 +15,11 @@ import {
   ChevronDown,
   ChevronUp,
   MapPin,
-  Compass
+  Compass,
+  Globe,
+  CheckCircle2
 } from 'lucide-react';
+import { StorageService } from '../services/storageService';
 import L from 'leaflet';
 
 interface MapShellProps {
@@ -28,6 +31,7 @@ interface MapShellProps {
   hasReportedMissed: boolean;
   onOpenPostCollection: () => void;
   onSelectWard?: (ward: Ward) => void;
+  onToggleLang?: () => void;
 }
 
 export const MapShell: React.FC<MapShellProps> = ({
@@ -39,6 +43,7 @@ export const MapShell: React.FC<MapShellProps> = ({
   hasReportedMissed,
   onOpenPostCollection,
   onSelectWard,
+  onToggleLang,
 }) => {
   const t = translations[lang];
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -49,6 +54,16 @@ export const MapShell: React.FC<MapShellProps> = ({
 
   // Fullscreen map mode state per user requirement
   const [isFullscreenMap, setIsFullscreenMap] = useState(false);
+  const [isCollectedToday, setIsCollectedToday] = useState(StorageService.isGarbageCollectedToday(ward.id));
+
+  useEffect(() => {
+    setIsCollectedToday(StorageService.isGarbageCollectedToday(ward.id));
+    const handleCollectionUpdate = () => {
+      setIsCollectedToday(StorageService.isGarbageCollectedToday(ward.id));
+    };
+    window.addEventListener('safai_sathi_collection_updated', handleCollectionUpdate);
+    return () => window.removeEventListener('safai_sathi_collection_updated', handleCollectionUpdate);
+  }, [ward.id]);
 
   // Active van for this ward's route
   const activeVan = vans.find(v => v.routeId === ward.routeId && v.status === 'on_shift') || vans[0];
@@ -285,6 +300,18 @@ export const MapShell: React.FC<MapShellProps> = ({
           )}
         </button>
 
+        {/* Language Switch Button */}
+        {onToggleLang && (
+          <button
+            onClick={onToggleLang}
+            className="w-12 h-12 rounded-full bg-white text-[#111A14] shadow-elev2 border border-[#DCE5D9] flex flex-col items-center justify-center active:scale-95 transition"
+            title="Switch Language / ભાષા બદલો"
+          >
+            <Globe className="w-4 h-4 text-[#1B7A3F]" />
+            <span className="text-[9px] font-bold text-[#14201A] uppercase tracking-wider">{lang === 'gu' ? 'EN' : 'ગુજ'}</span>
+          </button>
+        )}
+
         {/* Recenter Van Button */}
         <button
           onClick={handleRecenter}
@@ -302,7 +329,7 @@ export const MapShell: React.FC<MapShellProps> = ({
           <div className="flex items-center gap-2 pl-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#1B7A3F] animate-ping" />
             <span className="text-xs font-bold text-[#14201A]">
-              {isNear ? t.arrived : `${t.etaTitle}: ${etaMinutes} ${t.etaMinutes}`}
+              {isCollectedToday ? (lang === 'gu' ? '✅ કલેક્શન પૂર્ણ' : '✅ Waste Collection Done') : (isNear ? t.arrived : `${t.etaTitle}: ${etaMinutes} ${t.etaMinutes}`)}
             </span>
           </div>
           <button

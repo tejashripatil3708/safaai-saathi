@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Camera, X, Check, AlertCircle, Send, MapPin, ShieldCheck, FileText, MapPinned } from 'lucide-react';
+import { Camera, X, Check, AlertCircle, Send, ShieldCheck, FileText, MapPinned } from 'lucide-react';
 import { ComplaintCategory, Complaint } from '../types';
 import { Language, translations } from '../core/localization';
 import { CameraModal } from './CameraModal';
-import { OtpModal } from './OtpModal';
+import { OtpModal, VerificationMode } from './OtpModal';
 import { TicketDispatchedModal } from './TicketDispatchedModal';
+import { WhatsAppChatSimulationModal } from './WhatsAppChatSimulationModal';
 import { LocationCoords, GeoService } from '../services/simulationService';
 import { StorageService } from '../services/storageService';
 import { WhatsAppDispatchService, WhatsAppDispatchResult } from '../services/whatsappDispatchService';
@@ -40,6 +41,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
   const [createdComplaint, setCreatedComplaint] = useState<Complaint | null>(null);
   const [dispatchResult, setDispatchResult] = useState<WhatsAppDispatchResult | null>(null);
   const [isDispatchedOpen, setIsDispatchedOpen] = useState(false);
+  const [isWhatsAppSimOpen, setIsWhatsAppSimOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -74,7 +76,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
     setIsOtpOpen(true);
   };
 
-  const executeSubmission = async (phone: string) => {
+  const executeSubmission = async (phone: string, mode: VerificationMode) => {
     setIsSubmitting(true);
     setError(null);
 
@@ -111,11 +113,6 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
     onComplaintCreated(newComplaint);
     setCreatedComplaint(newComplaint);
 
-    // Directly dispatch official ticket to citizen's WhatsApp number via automated bot service
-    const result = await WhatsAppDispatchService.dispatchTicketToWhatsApp(newComplaint);
-    setDispatchResult(result);
-    setIsSubmitting(false);
-
     // Celebratory confetti
     confetti({
       particleCount: 80,
@@ -124,8 +121,17 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
       colors: ['#087F78', '#1B7A3F', '#F5B544', '#A8E5CB'],
     });
 
-    // Open direct confirmation card
-    setIsDispatchedOpen(true);
+    setIsSubmitting(false);
+
+    if (mode === 'demo') {
+      // Demo Mode: Open authentic WhatsApp chat simulation
+      setIsWhatsAppSimOpen(true);
+    } else {
+      // Live API Mode: Dispatch via WhatsApp gateway service
+      const result = await WhatsAppDispatchService.dispatchTicketToWhatsApp(newComplaint);
+      setDispatchResult(result);
+      setIsDispatchedOpen(true);
+    }
   };
 
   return (
@@ -138,7 +144,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
               <img
                 src="./logo.svg"
                 alt="Logo"
-                className="w-8 h-8 rounded-xl object-cover shadow-sm"
+                className="w-8 h-8 rounded-xl object-cover shadow-sm bg-white"
               />
               <div>
                 <h3 className="text-base font-bold text-[#14201A]">
@@ -315,11 +321,22 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
       <OtpModal
         isOpen={isOtpOpen}
         onClose={() => setIsOtpOpen(false)}
-        onVerified={phone => executeSubmission(phone)}
+        onVerified={(phone, mode) => executeSubmission(phone, mode)}
         lang={lang}
       />
 
-      {/* Direct Ticket Dispatched Confirmation Modal */}
+      {/* Authentic WhatsApp Chat Simulation Modal (Demo Mode) */}
+      <WhatsAppChatSimulationModal
+        isOpen={isWhatsAppSimOpen}
+        complaint={createdComplaint}
+        onClose={() => {
+          setIsWhatsAppSimOpen(false);
+          onClose();
+        }}
+        lang={lang}
+      />
+
+      {/* Direct Ticket Dispatched Confirmation Modal (Live API Mode) */}
       <TicketDispatchedModal
         isOpen={isDispatchedOpen}
         complaint={createdComplaint}

@@ -214,7 +214,6 @@ export const App: React.FC = () => {
             <GlassTopBar
               ward={selectedWard}
               lang={lang}
-              onToggleLang={handleToggleLang}
               onOpenSettings={() => setCurrentTab('settings')}
               soundEnabled={soundEnabled}
               onToggleSound={() => setSoundEnabled(prev => !prev)}

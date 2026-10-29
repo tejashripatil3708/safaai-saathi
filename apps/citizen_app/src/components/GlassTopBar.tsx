@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Ward } from '../types';
 import { Language } from '../core/localization';
 import { StorageService } from '../services/storageService';
-import { MapPin, Globe, Volume2, VolumeX, Download, X, Smartphone, PackageCheck, ExternalLink } from 'lucide-react';
+import { Volume2, VolumeX, Download, X, Smartphone, PackageCheck, ExternalLink } from 'lucide-react';
 
 interface GlassTopBarProps {
   ward: Ward;
   lang: Language;
-  onToggleLang: () => void;
   onOpenSettings: () => void;
   soundEnabled: boolean;
   onToggleSound: () => void;
@@ -16,7 +15,6 @@ interface GlassTopBarProps {
 export const GlassTopBar: React.FC<GlassTopBarProps> = ({
   ward,
   lang,
-  onToggleLang,
   onOpenSettings,
   soundEnabled,
   onToggleSound,
@@ -90,11 +88,11 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
   return (
     <>
       <header className="absolute top-4 left-4 right-4 z-30 pointer-events-auto">
-        <div className="h-16 rounded-full bg-white/85 backdrop-blur-md px-3.5 flex items-center justify-between shadow-elev2 border border-white/60">
-          {/* Left: Place Icon + Address/Area */}
+        <div className="h-16 rounded-full bg-white/90 backdrop-blur-md px-3.5 flex items-center justify-between shadow-elev2 border border-white/60">
+          {/* Left: Official App Logo + Area/Ward */}
           <button
             onClick={onOpenSettings}
-            className="flex items-center gap-2.5 text-left active:scale-95 transition min-w-0"
+            className="flex items-center gap-2.5 text-left active:scale-95 transition min-w-0 flex-1 pr-2"
           >
             <img
               src="./logo.svg"
@@ -102,7 +100,7 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
               className="w-10 h-10 rounded-full object-cover shrink-0 shadow-sm border border-emerald-600/30 bg-white"
             />
             <div className="min-w-0 pr-1">
-              <h2 className="text-xs font-bold text-[#14201A] truncate max-w-[130px] sm:max-w-[180px]">
+              <h2 className="text-xs font-bold text-[#14201A] truncate max-w-[150px] sm:max-w-[220px]">
                 {citizenAddress || (lang === 'gu' ? ward.nameGu : ward.name)}
               </h2>
               <p className="text-[10px] text-[#566259] font-medium truncate">
@@ -111,7 +109,7 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
             </div>
           </button>
 
-          {/* Right: Sound Alert + Language Switcher + Download/Install App */}
+          {/* Right: Sound Alert + Download/Install App (Language switcher moved to floating side control to prevent overlap) */}
           <div className="flex items-center gap-1.5 shrink-0">
             {!isInstalled && (
               <button
@@ -133,15 +131,6 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
               title={soundEnabled ? 'Arrival sound on' : 'Arrival sound muted'}
             >
               {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-            </button>
-
-            <button
-              onClick={onToggleLang}
-              className="h-9 px-3 rounded-full bg-[#111A14] hover:bg-black text-white text-xs font-bold flex items-center gap-1 shadow-sm active:scale-95 transition"
-              title="Switch Language"
-            >
-              <Globe className="w-3.5 h-3.5 text-[#6DB36F]" />
-              <span>{lang === 'gu' ? 'EN' : 'ગુજ'}</span>
             </button>
           </div>
         </div>
