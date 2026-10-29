@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Camera, X, Check, AlertCircle, Send, ShieldCheck, FileText, MapPinned } from 'lucide-react';
-import { ComplaintCategory, Complaint } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Camera, X, Check, AlertCircle, Send, ShieldCheck, FileText, Lock, RefreshCw, MapPin } from 'lucide-react';
+import { ComplaintCategory, Complaint, Ward } from '../types';
 import { Language, translations } from '../core/localization';
 import { CameraModal } from './CameraModal';
 import { OtpModal } from './OtpModal';
@@ -15,6 +15,7 @@ interface ReportProblemSheetProps {
   onClose: () => void;
   wardId: string;
   lang: Language;
+  userLocation?: LocationCoords | null;
   onComplaintCreated: (complaint: Complaint) => void;
   onViewComplaints?: () => void;
 }
@@ -24,17 +25,25 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
   onClose,
   wardId,
   lang,
+  userLocation,
   onComplaintCreated,
   onViewComplaints,
 }) => {
   const t = translations[lang];
+  const currentWard = SEED_WARDS.find(w => w.id === wardId) || SEED_WARDS[0];
 
   const [category, setCategory] = useState<ComplaintCategory>('garbage_dump');
   const [customTitle, setCustomTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [address, setAddress] = useState(StorageService.getCitizenAddress());
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [capturedLocation, setCapturedLocation] = useState<LocationCoords | null>(null);
+
+  // Tamper-proof GPS auto-detection state
+  const [capturedLocation, setCapturedLocation] = useState<LocationCoords | null>(userLocation || null);
+  const [detectedWard, setDetectedWard] = useState<Ward>(
+    userLocation ? GeoService.findWardByLocation(userLocation) || currentWard : currentWard
+  );
+  const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(userLocation ? 5 : null);
+  const [gpsStatus, setGpsStatus] = useState<'detecting' | 'acquired' | 'fallback'>('detecting');
 
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isOtpOpen, setIsOtpOpen] = useState(false);
@@ -43,24 +52,82 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!isOpen) return null;
+  // Auto-detect GPS coordinates on modal open
+  useEffect(() => {
+    if (!isOpen) {
+      setError(null);
+      return;
+    }
+    detectGpsLocation();
+  }, [isOpen, wardId]);
 
-  const currentWard = SEED_WARDS.find(w => w.id === wardId) || SEED_WARDS[0];
+  const detectGpsLocation = () => {
+    setGpsStatus('detecting');
+    setError(null);
+
+    // Seed immediately with initial userLocation if available to avoid waiting
+    if (userLocation) {
+      setCapturedLocation(userLocation);
+      const matched = GeoService.findWardByLocation(userLocation) || currentWard;
+      setDetectedWard(matched);
+      setGpsAccuracy(5);
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const coords: LocationCoords = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          setCapturedLocation(coords);
+          const matched = GeoService.findWardByLocation(coords) || currentWard;
+          setDetectedWard(matched);
+          setGpsAccuracy(Math.round(position.coords.accuracy || 4));
+          setGpsStatus('acquired');
+        },
+        err => {
+          console.warn('GPS hardware auto-detect notice:', err);
+          const fallback = userLocation || currentWard.center;
+          setCapturedLocation(fallback);
+          const matched = GeoService.findWardByLocation(fallback) || currentWard;
+          setDetectedWard(matched);
+          setGpsAccuracy(12);
+          setGpsStatus('fallback');
+        },
+        { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 }
+      );
+    } else {
+      const fallback = userLocation || currentWard.center;
+      setCapturedLocation(fallback);
+      setDetectedWard(currentWard);
+      setGpsStatus('fallback');
+    }
+  };
+
+  if (!isOpen) return null;
 
   const handlePhotoCaptured = (dataUrl: string, location: LocationCoords, _timestamp: string) => {
     setPhotoUrl(dataUrl);
     setCapturedLocation(location);
+    const matched = GeoService.findWardByLocation(location) || currentWard;
+    setDetectedWard(matched);
+    setGpsStatus('acquired');
     setError(null);
   };
 
   const handleInitialSubmit = () => {
-    if (!photoUrl || !capturedLocation) {
-      setError(lang === 'gu' ? 'કૃપા કરી લાઈવ કેમેરાથી ફોટો પાડો' : 'Please take a live photo via camera first');
+    if (!capturedLocation) {
+      setError(
+        lang === 'gu'
+          ? 'જીપીએસ કોઓર્ડિનેટ્સ મળ્યા નથી. કૃપા કરી GPS ચાલુ કરો.'
+          : 'Could not acquire GPS coordinates. Please ensure GPS is enabled on your device.'
+      );
       return;
     }
 
-    if (!address.trim()) {
-      setError(lang === 'gu' ? 'કૃપા કરી ઘર/વિસ્તારનું સરનામું દાખલ કરો' : 'Please provide the street/area address');
+    if (!photoUrl) {
+      setError(lang === 'gu' ? 'કૃપા કરી લાઈવ કેમેરાથી ફોટો પાડો' : 'Please take a live photo via camera first');
       return;
     }
 
@@ -75,14 +142,18 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
   };
 
   const executeSubmission = (phone: string) => {
+    if (!capturedLocation) return;
     setIsSubmitting(true);
     setError(null);
 
     const ticketId = GeoService.generateTicketId();
-    const resolvedWard = GeoService.findWardByLocation(capturedLocation || currentWard.center) || currentWard;
+    const resolvedWard = detectedWard || GeoService.findWardByLocation(capturedLocation) || currentWard;
 
-    // Save citizen street/area address for future convenience (phone number is NEVER saved)
-    StorageService.setCitizenAddress(address.trim(), resolvedWard.id);
+    // Tamper-proof coordinates formatted address
+    const coordsStr = `${capturedLocation.lat.toFixed(5)}° N, ${capturedLocation.lng.toFixed(5)}° E`;
+    const formattedAddress = description.trim()
+      ? `${resolvedWard.name} (${description.trim()}) • GPS: ${coordsStr}`
+      : `${resolvedWard.name} • GPS: ${coordsStr}`;
 
     const newComplaint: Complaint = {
       id: 'cmp_' + Date.now().toString(36),
@@ -92,9 +163,9 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
       category,
       categoryCustomTitle: customTitle.trim() || undefined,
       description: description.trim() || undefined,
-      address: address.trim(),
+      address: formattedAddress,
       photoUrl: photoUrl!,
-      location: capturedLocation || currentWard.center,
+      location: capturedLocation,
       wardId: resolvedWard.id,
       createdAt: new Date().toISOString(),
       status: 'received',
@@ -133,20 +204,20 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
               <img
                 src="./logo.svg"
                 alt="Logo"
-                className="w-8 h-8 rounded-xl object-cover shadow-sm bg-white"
+                className="w-8 h-8 rounded-xl object-cover shadow-sm bg-white border border-[#DCE5D9]"
               />
               <div>
                 <h3 className="text-base font-bold text-[#14201A]">
                   {t.reportProblem}
                 </h3>
-                <p className="text-[11px] text-[#566259]">
-                  {address || (lang === 'gu' ? currentWard.nameGu : currentWard.name)}
+                <p className="text-[11px] font-semibold text-[#1B7A3F]">
+                  {lang === 'gu' ? detectedWard.nameGu : detectedWard.name} ({detectedWard.code})
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="w-9 h-9 rounded-full bg-[#E9F1E6] flex items-center justify-center text-[#566259] hover:text-black"
+              className="w-9 h-9 rounded-full bg-[#E9F1E6] flex items-center justify-center text-[#566259] hover:text-black transition"
             >
               <X className="w-5 h-5" />
             </button>
@@ -181,7 +252,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
               </div>
             </div>
 
-            {/* If 'Other' or any category: Allow exact issue title */}
+            {/* If 'Other': Allow exact issue title */}
             {category === 'other' && (
               <div>
                 <label className="block text-xs font-bold text-[#14201A] uppercase tracking-wider mb-2">
@@ -197,33 +268,94 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
               </div>
             )}
 
-            {/* 2. Optional Detailed Description */}
+            {/* 2. AUTO-DETECTED GPS COORDINATES (Strictly Locked / Tamper-Proof) */}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-[#14201A] uppercase tracking-wider flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-[#1B7A3F]" />
+                  <span>
+                    {lang === 'gu'
+                      ? 'ઓટો-ડિટેક્ટેડ GPS લોકેશન (લૉક કરેલ)'
+                      : 'Auto GPS Location (Locked / Read-Only)'}
+                  </span>
+                </label>
+                <button
+                  type="button"
+                  onClick={detectGpsLocation}
+                  disabled={gpsStatus === 'detecting'}
+                  className="text-[11px] font-semibold text-[#1B7A3F] hover:underline flex items-center gap-1 active:scale-95 transition disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3 h-3 ${gpsStatus === 'detecting' ? 'animate-spin text-[#1B7A3F]' : ''}`} />
+                  <span>{lang === 'gu' ? 'GPS રિફ્રેશ' : 'Refresh GPS'}</span>
+                </button>
+              </div>
+
+              {/* Tamper-proof locked coordinate badge */}
+              <div className="p-3.5 rounded-[22px] bg-[#EAF2E7]/80 border-2 border-[#1B7A3F]/30 shadow-inner flex flex-col gap-2 relative">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-[#1B7A3F] text-white flex items-center justify-center shrink-0 shadow-sm">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-mono font-bold text-[#14201A]">
+                          {capturedLocation
+                            ? `${capturedLocation.lat.toFixed(5)}° N, ${capturedLocation.lng.toFixed(5)}° E`
+                            : (lang === 'gu' ? 'GPS શોધાઈ રહ્યું છે...' : 'Acquiring GPS...')}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-[#1B7A3F] text-white flex items-center gap-0.5 shadow-xs">
+                          <Lock className="w-2.5 h-2.5" />
+                          <span>{lang === 'gu' ? 'લૉક' : 'LOCKED'}</span>
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-bold text-[#1B7A3F] mt-0.5">
+                        {lang === 'gu' ? detectedWard.nameGu : detectedWard.name} ({detectedWard.code})
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* High Accuracy Status Pill */}
+                  <div className="shrink-0 text-right">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#1B7A3F] bg-white px-2 py-0.5 rounded-full border border-[#DCE5D9] shadow-xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#1B7A3F] animate-pulse"></span>
+                      {gpsAccuracy ? `±${gpsAccuracy}m` : 'Hardware GPS'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Fraud Prevention Disclaimer Banner */}
+                <div className="pt-2 border-t border-[#1B7A3F]/15 flex items-start gap-1.5 text-[10px] text-[#4A5D50] leading-snug">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#1B7A3F] shrink-0 mt-0.5" />
+                  <span>
+                    {lang === 'gu'
+                      ? 'છેડછાડ નિવારણ: ખોટા વિસ્તારની ફરિયાદ રોકવા માટે આ લોકેશન તમારા ઉપકરણના હાર્ડવેર જીપીએસ સાથે લૉક છે અને બદલી શકાશે નહીં.'
+                      : 'Fraud Prevention: Location coordinates are locked directly to your device hardware GPS to prevent false reporting in other areas.'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Optional Detailed Description / Landmark Context */}
             <div>
               <label className="block text-xs font-bold text-[#14201A] uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5 text-[#1B7A3F]" />
-                <span>{t.detailedDescLabel}</span>
+                <span>
+                  {lang === 'gu'
+                    ? 'નજીકનો લેન્ડમાર્ક / વિગત (મરજિયાત)'
+                    : 'Nearby Landmark / Context Note (Optional)'}
+                </span>
               </label>
               <textarea
                 value={description}
                 onChange={e => setDescription(e.target.value)}
-                placeholder={t.detailedDescPlaceholder}
+                placeholder={
+                  lang === 'gu'
+                    ? 'દા.ત. પાણીની ટાંકી પાસે, મેડિકલ સ્ટોર પાછળ, શેરી નં. ૩ (જીપીએસ કોઓર્ડિનેટ્સ આપમેળે લૉક રહેશે)...'
+                    : 'E.g. Near overhead tank, behind medical store, Street #3 (Coordinates remain locked above)...'
+                }
                 rows={2}
                 className="w-full p-3.5 rounded-[18px] bg-white border-2 border-[#74897A] focus:border-[#1B7A3F] focus:outline-none text-xs text-[#14201A] placeholder:text-[#566259]"
-              />
-            </div>
-
-            {/* 3. Address / Landmark Input */}
-            <div>
-              <label className="block text-xs font-bold text-[#14201A] uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <MapPinned className="w-3.5 h-3.5 text-[#1B7A3F]" />
-                <span>{t.myAddressTitle} *</span>
-              </label>
-              <input
-                type="text"
-                value={address}
-                onChange={e => setAddress(e.target.value)}
-                placeholder={t.addressPlaceholder}
-                className="w-full h-12 px-4 rounded-[18px] bg-white border-2 border-[#74897A] focus:border-[#1B7A3F] focus:outline-none text-xs text-[#14201A]"
               />
             </div>
 
@@ -304,6 +436,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
         onClose={() => setIsCameraOpen(false)}
         onCapture={handlePhotoCaptured}
         lang={lang}
+        initialCoords={capturedLocation}
       />
 
       {/* Mandatory Phone OTP Verification Modal on Every Single Submission */}

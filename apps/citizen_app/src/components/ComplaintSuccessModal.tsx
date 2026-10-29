@@ -135,12 +135,17 @@ export const ComplaintSuccessModal: React.FC<ComplaintSuccessModalProps> = ({
               </span>
             </div>
 
-            <div className="p-3 rounded-2xl bg-[#F3F6F2] border border-[#DCE5D9]">
-              <span className="text-[10px] font-bold text-[#566259] uppercase tracking-wider block">
-                {lang === 'gu' ? 'સ્થળ / વિસ્તાર' : 'Location'}
-              </span>
+            <div className="p-3 rounded-2xl bg-[#EAF2E7] border border-[#1B7A3F]/30">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-[#1B7A3F] uppercase tracking-wider block">
+                  {lang === 'gu' ? 'GPS લોકેશન' : 'GPS Location'}
+                </span>
+                <span className="text-[9px] font-black uppercase tracking-wider bg-[#1B7A3F] text-white px-1.5 py-0.5 rounded-full">
+                  🔒 LOCKED
+                </span>
+              </div>
               <span className="text-xs font-bold text-[#14201A] mt-0.5 flex items-center gap-1 truncate">
-                <MapPin className="w-3.5 h-3.5 text-[#74897A] shrink-0" />
+                <MapPin className="w-3.5 h-3.5 text-[#1B7A3F] shrink-0" />
                 <span className="truncate">{complaint.address || 'Godhra'}</span>
               </span>
             </div>

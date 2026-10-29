@@ -247,16 +247,27 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
                 </button>
               )}
 
-            {/* Address / Location Details */}
-            {complaint.address && (
-              <div className="p-3 bg-[#E9F1E6] dark:bg-[#1E2D24] rounded-2xl flex items-start gap-2 text-xs text-[#14201A] dark:text-[#EAF2E6]">
-                <MapPin className="w-4 h-4 text-[#1B7A3F] dark:text-[#6DB36F] shrink-0 mt-0.5" />
-                <div>
-                  <strong>{lang === 'gu' ? 'સ્થળ / સરનામું:' : 'Location Address:'}</strong>
-                  <p className="mt-0.5 text-[#566259] dark:text-[#9DB0A2]">{complaint.address}</p>
+            {/* Auto-Detected GPS Coordinates & Location Details (Locked) */}
+            <div className="p-3.5 bg-[#EAF2E7] dark:bg-[#1E2D24] rounded-[22px] flex flex-col gap-2 border border-[#1B7A3F]/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-[#1B7A3F] dark:text-[#6DB36F]">
+                  <MapPin className="w-4 h-4 shrink-0" />
+                  <span>{lang === 'gu' ? 'ઓટો-ડિટેક્ટેડ GPS લોકેશન:' : 'GPS Location (Tamper-Proof):'}</span>
                 </div>
+                <span className="text-[10px] font-black uppercase tracking-wider bg-[#1B7A3F] text-white px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+                  <span>🔒</span>
+                  <span>{lang === 'gu' ? 'લૉક' : 'LOCKED'}</span>
+                </span>
               </div>
-            )}
+              <div className="bg-white/80 dark:bg-[#14201A]/80 p-2.5 rounded-xl border border-[#DCE5D9] dark:border-[#2A3B31]">
+                <p className="font-mono text-xs font-bold text-[#14201A] dark:text-[#EAF2E6]">
+                  📍 {complaint.location.lat.toFixed(5)}° N, {complaint.location.lng.toFixed(5)}° E
+                </p>
+                <p className="text-[11px] font-semibold text-[#1B7A3F] dark:text-[#6DB36F] mt-0.5">
+                  {complaint.address}
+                </p>
+              </div>
+            </div>
 
             {/* Detailed Description */}
             {complaint.description && (

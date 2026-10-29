@@ -8,6 +8,7 @@ interface CameraModalProps {
   onClose: () => void;
   onCapture: (dataUrl: string, location: LocationCoords, timestamp: string) => void;
   lang: Language;
+  initialCoords?: LocationCoords | null;
 }
 
 export const CameraModal: React.FC<CameraModalProps> = ({
@@ -15,6 +16,7 @@ export const CameraModal: React.FC<CameraModalProps> = ({
   onClose,
   onCapture,
   lang,
+  initialCoords,
 }) => {
   const t = translations[lang];
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -195,12 +197,12 @@ export const CameraModal: React.FC<CameraModalProps> = ({
           fetchGpsAndStamp({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         },
         _err => {
-          fetchGpsAndStamp({ lat: 22.7758, lng: 73.6149 });
+          fetchGpsAndStamp(initialCoords || { lat: 22.7758, lng: 73.6149 });
         },
         { enableHighAccuracy: true, timeout: 5000 }
       );
     } else {
-      fetchGpsAndStamp({ lat: 22.7758, lng: 73.6149 });
+      fetchGpsAndStamp(initialCoords || { lat: 22.7758, lng: 73.6149 });
     }
   };
 

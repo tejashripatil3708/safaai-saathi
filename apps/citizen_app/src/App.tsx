@@ -264,6 +264,7 @@ export const App: React.FC = () => {
         onClose={() => setIsReportOpen(false)}
         wardId={wardId}
         lang={lang}
+        userLocation={userLocation}
         onComplaintCreated={handleComplaintCreated}
         onViewComplaints={() => {
           setIsReportOpen(false);
