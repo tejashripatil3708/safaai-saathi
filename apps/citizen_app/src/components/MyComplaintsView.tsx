@@ -43,7 +43,7 @@ export const MyComplaintsView: React.FC<MyComplaintsViewProps> = ({
       {complaints.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center my-10 bg-white dark:bg-[#16221B] rounded-[28px] border border-[#DCE5D9] dark:border-[#2A3B31] shadow-elev1">
           <img
-            src="./logo.svg"
+            src="./logo.png"
             alt="Safai Saathi"
             className="w-20 h-20 rounded-3xl object-cover mb-4 shadow-sm border border-[#DCE5D9] dark:border-[#2A3B31] bg-white"
           />

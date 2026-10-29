@@ -263,7 +263,7 @@ export const MapShell: React.FC<MapShellProps> = ({
         <div className="bg-white/95 dark:bg-[#16221B]/95 backdrop-blur-md px-4 py-3 rounded-[24px] shadow-elev2 border border-[#DCE5D9] dark:border-[#2A3B31] flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
-              src="./logo.svg"
+              src="./logo.png"
               alt="Safai Saathi"
               className="w-11 h-11 rounded-2xl object-cover shadow-sm border border-[#DCE5D9] dark:border-[#2A3B31] bg-white shrink-0"
             />

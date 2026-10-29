@@ -97,7 +97,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           {currentStep === 0 && (
             <div className="flex flex-col items-center gap-4 animate-in zoom-in-95">
               <img
-                src="./logo.svg"
+                src="./logo.png"
                 alt="Safai Saathi"
                 className="w-24 h-24 rounded-3xl shadow-lg border-2 border-white object-cover bg-white"
               />

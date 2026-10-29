@@ -81,7 +81,7 @@ export const WhatsAppChatSimulationModal: React.FC<WhatsAppChatSimulationModalPr
             </button>
             <div className="relative">
               <img
-                src="./logo.svg"
+                src="./logo.png"
                 alt="Bot Avatar"
                 className="w-10 h-10 rounded-full object-cover bg-white border border-white/50"
               />

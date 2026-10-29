@@ -95,7 +95,7 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
             className="flex items-center gap-2.5 text-left active:scale-95 transition min-w-0 flex-1 pr-2"
           >
             <img
-              src="./logo.svg"
+              src="./logo.png"
               alt="Safai Saathi"
               className="w-10 h-10 rounded-full object-cover shrink-0 shadow-sm border border-emerald-600/30 bg-white"
             />
@@ -143,7 +143,7 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
             <div className="flex items-center justify-between pb-2 border-b border-[#E9F1E6] dark:border-[#2A3B31]">
               <div className="flex items-center gap-2.5">
                 <img
-                  src="./logo.svg"
+                  src="./logo.png"
                   alt="Safai Saathi"
                   className="w-10 h-10 rounded-xl object-cover bg-white shadow-sm border border-[#DCE5D9]"
                 />

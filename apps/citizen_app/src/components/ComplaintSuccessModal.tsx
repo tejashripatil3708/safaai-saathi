@@ -44,7 +44,7 @@ export const ComplaintSuccessModal: React.FC<ComplaintSuccessModalProps> = ({
           {/* Official App Logo */}
           <div className="relative mb-3">
             <img
-              src="./logo.svg"
+              src="./logo.png"
               alt="Safai Saathi Official Seal"
               className="w-16 h-16 rounded-2xl shadow-xl border-2 border-white/80 object-cover bg-white"
             />

@@ -110,7 +110,7 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
           <div className="sticky top-0 z-10 bg-white/95 dark:bg-[#16221B]/95 backdrop-blur-md px-6 py-4 border-b border-[#DCE5D9] dark:border-[#2A3B31] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <img
-                src="./logo.svg"
+                src="./logo.png"
                 alt="Logo"
                 className="w-9 h-9 rounded-xl object-cover shadow-sm bg-white border border-[#DCE5D9]"
               />
