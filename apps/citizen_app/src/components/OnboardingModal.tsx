@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
 import { translations, Language } from '../core/localization';
 import { StorageService } from '../services/storageService';
-import { Sparkles, MapPin, Camera, Clock, ArrowRight, CheckCircle2, Shield, Navigation } from 'lucide-react';
+import { Sparkles, MapPin, Camera, Clock, ArrowRight, CheckCircle2, Shield, Navigation, Globe, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface OnboardingModalProps {
   isOpen: boolean;
   onClose: () => void;
   lang: Language;
+  onToggleLang: () => void;
 }
 
 export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   isOpen,
   onClose,
   lang,
+  onToggleLang,
 }) => {
   const t = translations[lang];
   const [currentStep, setCurrentStep] = useState(0);
@@ -45,6 +47,11 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     onClose();
   };
 
+  const handleSkip = () => {
+    StorageService.setHasSeenIntro(true);
+    onClose();
+  };
+
   const handleGpsDetect = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -60,19 +67,29 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
       <div className="w-full max-w-md bg-white dark:bg-[#16221B] rounded-[32px] overflow-hidden shadow-2xl border border-[#DCE5D9] dark:border-[#2A3B31] flex flex-col justify-between min-h-[520px]">
-        {/* Top Header & Skip */}
+        {/* Top Header & Language Toggle & Skip */}
         <div className="p-6 pb-0 flex items-center justify-between">
-          <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-[#E4F1DF] dark:bg-[#1F3A2A] text-[#1B7A3F] dark:text-[#6DB36F]">
-            {t.intro.badge}
-          </span>
-          {currentStep < totalSteps - 1 && (
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-[#E4F1DF] dark:bg-[#1F3A2A] text-[#1B7A3F] dark:text-[#6DB36F]">
+              {t.intro.badge}
+            </span>
+            {/* Gujarati <-> English Language Switcher */}
             <button
-              onClick={handleComplete}
-              className="text-xs font-semibold text-[#566259] dark:text-[#9DB0A2] hover:underline"
+              onClick={onToggleLang}
+              className="h-7 px-2.5 rounded-full bg-[#111A14] hover:bg-black text-white text-[11px] font-bold flex items-center gap-1 shadow-sm active:scale-95 transition"
+              title="Switch Language / ભાષા બદલો"
             >
-              {t.intro.skip}
+              <Globe className="w-3 h-3 text-[#6DB36F]" />
+              <span>{lang === 'gu' ? 'EN' : 'ગુજ'}</span>
             </button>
-          )}
+          </div>
+
+          <button
+            onClick={handleSkip}
+            className="text-xs font-semibold text-[#566259] dark:text-[#9DB0A2] hover:underline"
+          >
+            {t.intro.skip}
+          </button>
         </div>
 
         {/* Carousel Content Body */}

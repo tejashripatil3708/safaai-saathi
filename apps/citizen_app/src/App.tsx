@@ -285,8 +285,12 @@ export const App: React.FC = () => {
       {/* Onboarding / App Introduction Walkthrough */}
       <OnboardingModal
         isOpen={isIntroOpen}
-        onClose={() => setIsIntroOpen(false)}
+        onClose={() => {
+          StorageService.setHasSeenIntro(true);
+          setIsIntroOpen(false);
+        }}
         lang={lang}
+        onToggleLang={handleToggleLang}
       />
     </div>
   );
