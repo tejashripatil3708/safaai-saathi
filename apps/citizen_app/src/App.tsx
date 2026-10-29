@@ -210,25 +210,17 @@ export const App: React.FC = () => {
       {/* Main Content Area based on Tab */}
       <main className="flex-1 w-full h-full relative overflow-y-auto">
         {currentTab === 'map' && (
-          <>
-            <GlassTopBar
-              ward={selectedWard}
-              lang={lang}
-              onOpenSettings={() => setCurrentTab('settings')}
-              soundEnabled={soundEnabled}
-              onToggleSound={() => setSoundEnabled(prev => !prev)}
-            />
-            <MapShell
-              ward={selectedWard}
-              vans={vans}
-              userLocation={userLocation}
-              lang={lang}
-              onReportMissedVan={handleReportMissedVan}
-              hasReportedMissed={hasReportedMissed}
-              onOpenPostCollection={() => setIsPostCollectionOpen(true)}
-              onSelectWard={(w) => setWardId(w.id)}
-            />
-          </>
+          <MapShell
+            ward={selectedWard}
+            vans={vans}
+            userLocation={userLocation}
+            lang={lang}
+            onReportMissedVan={handleReportMissedVan}
+            hasReportedMissed={hasReportedMissed}
+            onOpenPostCollection={() => setIsPostCollectionOpen(true)}
+            onSelectWard={(w) => setWardId(w.id)}
+            onOpenSettings={() => setCurrentTab('settings')}
+          />
         )}
 
         {currentTab === 'complaints' && (
@@ -263,6 +255,7 @@ export const App: React.FC = () => {
         onSelectTab={setCurrentTab}
         complaintsCount={complaints.filter(c => c.status !== 'resolved').length}
         lang={lang}
+        onToggleLang={handleToggleLang}
       />
 
       {/* Screen U2: Report Problem Modal */}

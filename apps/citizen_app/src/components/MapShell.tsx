@@ -32,6 +32,7 @@ interface MapShellProps {
   onOpenPostCollection: () => void;
   onSelectWard?: (ward: Ward) => void;
   onToggleLang?: () => void;
+  onOpenSettings?: () => void;
 }
 
 export const MapShell: React.FC<MapShellProps> = ({
@@ -44,6 +45,7 @@ export const MapShell: React.FC<MapShellProps> = ({
   onOpenPostCollection,
   onSelectWard,
   onToggleLang,
+  onOpenSettings,
 }) => {
   const t = translations[lang];
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -299,18 +301,6 @@ export const MapShell: React.FC<MapShellProps> = ({
             <Maximize2 className="w-5 h-5 text-[#1B7A3F]" />
           )}
         </button>
-
-        {/* Language Switch Button */}
-        {onToggleLang && (
-          <button
-            onClick={onToggleLang}
-            className="w-12 h-12 rounded-full bg-white text-[#111A14] shadow-elev2 border border-[#DCE5D9] flex flex-col items-center justify-center active:scale-95 transition"
-            title="Switch Language / ભાષા બદલો"
-          >
-            <Globe className="w-4 h-4 text-[#1B7A3F]" />
-            <span className="text-[9px] font-bold text-[#14201A] uppercase tracking-wider">{lang === 'gu' ? 'EN' : 'ગુજ'}</span>
-          </button>
-        )}
 
         {/* Recenter Van Button */}
         <button
