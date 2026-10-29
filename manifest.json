@@ -1,0 +1,26 @@
+{
+  "short_name": "Safai Saathi",
+  "name": "Safai Saathi - સ્વચ્છતા સાથી",
+  "description": "Citizen-Centric Municipal & Rural Garbage Collection, Open Gutter & Public Sanitation Monitoring System - Godhra Panchmahal",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./",
+  "scope": "./",
+  "background_color": "#F3F6F2",
+  "theme_color": "#1B7A3F",
+  "display": "standalone",
+  "orientation": "portrait",
+  "categories": ["government", "utilities", "productivity"]
+}
