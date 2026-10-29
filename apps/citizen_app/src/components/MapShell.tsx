@@ -258,29 +258,37 @@ export const MapShell: React.FC<MapShellProps> = ({
       {/* 1. Full Bleed Map Canvas */}
       <div ref={mapContainerRef} className="absolute inset-0 z-0 bg-[#E9F1E6]" />
 
-      {/* Ward Selector Horizontal Pill Carousel (3-4 km Radius Sectors) */}
-      <div className="absolute top-22 left-4 right-4 z-20 overflow-x-auto no-scrollbar flex items-center gap-2 py-1 pointer-events-auto">
-        {SEED_WARDS.map(w => {
-          const isSelected = w.id === ward.id;
-          const label = (lang === 'gu' ? w.nameGu : w.name).split(' - ')[0];
-          return (
+      {/* Official Top App Header (Clean, Large Logo & Language Switcher) */}
+      <div className="absolute top-4 left-4 right-4 z-20 pointer-events-auto">
+        <div className="bg-white/95 dark:bg-[#16221B]/95 backdrop-blur-md px-4 py-3 rounded-[24px] shadow-elev2 border border-[#DCE5D9] dark:border-[#2A3B31] flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img
+              src="./logo.svg"
+              alt="Safai Saathi"
+              className="w-11 h-11 rounded-2xl object-cover shadow-sm border border-[#DCE5D9] dark:border-[#2A3B31] bg-white shrink-0"
+            />
+            <div>
+              <h1 className="text-sm font-bold text-[#14201A] dark:text-[#EAF2E6] leading-tight">
+                {lang === 'gu' ? 'સ્વચ્છતા સાથી' : 'Safai Saathi'}
+              </h1>
+              <p className="text-[11px] font-semibold text-[#1B7A3F] dark:text-[#6DB36F] leading-tight mt-0.5">
+                {lang === 'gu' ? 'પંચમહાલ ગોધરા' : 'Panchmahal Godhra'}
+              </p>
+            </div>
+          </div>
+
+          {/* Clean Language Switcher in Header */}
+          {onToggleLang && (
             <button
-              key={w.id}
-              onClick={() => onSelectWard && onSelectWard(w)}
-              className={`h-8 px-3.5 rounded-full text-xs font-bold whitespace-nowrap shadow-md transition active:scale-95 flex items-center gap-1.5 border ${
-                isSelected
-                  ? 'bg-[#1B7A3F] text-white border-[#1B7A3F]'
-                  : 'bg-white/95 text-[#14201A] border-[#DCE5D9] hover:bg-[#F3F6F2]'
-              }`}
+              onClick={onToggleLang}
+              className="h-9 px-3 rounded-full bg-[#E4F1DF] dark:bg-[#1E2D24] text-[#1B7A3F] dark:text-[#6DB36F] font-bold text-xs flex items-center gap-1.5 transition active:scale-95 border border-[#B5CF8A]/50 hover:bg-[#D4E8CD] shadow-xs"
+              title="Switch Language / ભાષા બદલો"
             >
-              <Compass className={`w-3 h-3 ${isSelected ? 'text-white' : 'text-[#1B7A3F]'}`} />
-              <span>{label}</span>
-              <span className={`text-[9px] ${isSelected ? 'opacity-85 text-white' : 'text-[#74897A]'}`}>
-                ~3.2km
-              </span>
+              <Globe className="w-3.5 h-3.5 shrink-0" />
+              <span>{lang === 'gu' ? 'English' : 'ગુજરાતી'}</span>
             </button>
-          );
-        })}
+          )}
+        </div>
       </div>
 
       {/* Floating Map Controls (Right Side) */}

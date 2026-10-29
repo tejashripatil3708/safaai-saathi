@@ -2,7 +2,6 @@
   "appId": "gov.panchmahal.safaisaathi",
   "appName": "Safai Saathi",
   "webDir": "dist",
-  "bundledWebRuntime": false,
   "server": {
     "androidScheme": "https"
   }

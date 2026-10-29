@@ -7,11 +7,9 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
-  group: 'pages'
+  group: 'build-and-deploy'
   cancel-in-progress: true
 
 jobs:
@@ -42,25 +40,12 @@ jobs:
           name: safai-saathi-pwa-bundle
           path: apps/citizen_app/dist/
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to gh-pages branch
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          path: 'apps/citizen_app/dist/'
-
-  deploy:
-    name: Deploy to GitHub Pages
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          folder: apps/citizen_app/dist
+          branch: gh-pages
+          clean: true
 
   build-apk:
     name: Build Android APK
@@ -85,25 +70,28 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install dependencies & Build Assets
+      - name: Install Dependencies & Build Web Assets
         run: |
           npm --prefix apps/citizen_app install
           npm --prefix apps/citizen_app run build
 
-      - name: Add Capacitor Android Platform & Sync
+      - name: Sync Capacitor Android
         run: |
           cd apps/citizen_app
-          npx cap add android || true
           npx cap sync android
+
+      - name: Make Gradlew Executable
+        run: |
+          chmod +x apps/citizen_app/android/gradlew
 
       - name: Build Android Debug APK
         run: |
           cd apps/citizen_app/android
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: safai-saathi-android-apk
           path: apps/citizen_app/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

@@ -219,6 +219,7 @@ export const App: React.FC = () => {
             hasReportedMissed={hasReportedMissed}
             onOpenPostCollection={() => setIsPostCollectionOpen(true)}
             onSelectWard={(w) => setWardId(w.id)}
+            onToggleLang={handleToggleLang}
             onOpenSettings={() => setCurrentTab('settings')}
           />
         )}
@@ -255,7 +256,6 @@ export const App: React.FC = () => {
         onSelectTab={setCurrentTab}
         complaintsCount={complaints.filter(c => c.status !== 'resolved').length}
         lang={lang}
-        onToggleLang={handleToggleLang}
       />
 
       {/* Screen U2: Report Problem Modal */}
