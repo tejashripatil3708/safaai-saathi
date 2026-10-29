@@ -10,6 +10,7 @@ interface MyComplaintsViewProps {
   lang: Language;
   onOpenReport: () => void;
   onComplaintResolved: (complaintId: string, resolvedPhotoUrl: string, note?: string) => void;
+  onComplaintUpdated?: (updated: Complaint) => void;
 }
 
 export const MyComplaintsView: React.FC<MyComplaintsViewProps> = ({
@@ -17,6 +18,7 @@ export const MyComplaintsView: React.FC<MyComplaintsViewProps> = ({
   lang,
   onOpenReport,
   onComplaintResolved,
+  onComplaintUpdated,
 }) => {
   const t = translations[lang];
   const [selectedComplaintId, setSelectedComplaintId] = useState<string | null>(null);
@@ -128,8 +130,10 @@ export const MyComplaintsView: React.FC<MyComplaintsViewProps> = ({
         complaint={selectedComplaint}
         onClose={() => setSelectedComplaintId(null)}
         lang={lang}
-        onComplaintResolved={(id, resolvedPhotoUrl, note) => {
-          onComplaintResolved(id, resolvedPhotoUrl, note);
+        onComplaintUpdated={updated => {
+          if (onComplaintUpdated) {
+            onComplaintUpdated(updated);
+          }
         }}
       />
     </div>

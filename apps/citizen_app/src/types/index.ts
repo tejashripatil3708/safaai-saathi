@@ -83,7 +83,16 @@ export type ComplaintCategory =
   | 'hazardous_waste'
   | 'other';
 
-export type ComplaintStatus = 'received' | 'assigned' | 'resolved' | 'escalated' | 'queued';
+export type ComplaintStatus = 
+  | 'received' 
+  | 'assigned' 
+  | 'in_progress' 
+  | 'pending_verification' 
+  | 'resolved' 
+  | 'auto_resolved' 
+  | 'escalated' 
+  | 'reopened' 
+  | 'queued';
 
 export interface Complaint {
   id: string;
@@ -108,9 +117,25 @@ export interface Complaint {
   escalationLevel: number;
   escalatedToName?: string;
   escalatedToPhone?: string;
+  // Resolution & Cross-Verification fields
   resolvedPhotoUrl?: string;
   resolvedAt?: string;
   resolvedNote?: string;
+  // Admin & Worker cleaning submission
+  adminResolvedPhotoUrl?: string;
+  adminResolvedAt?: string;
+  adminResolvedNote?: string;
+  workerName?: string;
+  autoResolveDeadline?: string;
+  // Citizen verification responses
+  citizenVerifiedAt?: string;
+  citizenVerifiedStatus?: 'confirmed' | 'rejected';
+  citizenRejectReason?: string;
+  citizenRejectPhotoUrl?: string;
+  // Reopening
+  reopenedAt?: string;
+  reopenReason?: string;
+  reopenPhotoUrl?: string;
   mergedInto?: string;
   note?: string;
   slaDeadline?: string;

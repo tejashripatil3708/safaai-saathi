@@ -80,7 +80,26 @@ export class StorageService {
     const data = localStorage.getItem(STORAGE_KEYS.COMPLAINTS);
     if (!data) return [];
     try {
-      return JSON.parse(data);
+      const list: Complaint[] = JSON.parse(data);
+      // Auto-check 24-hour resolution window
+      let updated = false;
+      const now = Date.now();
+      list.forEach(c => {
+        if (c.status === 'pending_verification' && c.adminResolvedAt) {
+          const resolvedTime = new Date(c.adminResolvedAt).getTime();
+          // If 24h passed without citizen verification, auto-resolve
+          if (now - resolvedTime >= 24 * 3600 * 1000) {
+            c.status = 'auto_resolved';
+            c.resolvedAt = new Date().toISOString();
+            c.resolvedNote = 'Auto-resolved after 24h citizen verification window';
+            updated = true;
+          }
+        }
+      });
+      if (updated) {
+        localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(list));
+      }
+      return list;
     } catch {
       return [];
     }
@@ -107,6 +126,84 @@ export class StorageService {
       target.resolvedPhotoUrl = resolvedPhotoUrl;
       target.resolvedAt = new Date().toISOString();
       target.resolvedNote = resolvedNote;
+      localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
+    }
+  }
+
+  /**
+   * Admin / Worker marks spot as Cleaned -> enters pending_verification
+   */
+  static adminResolveComplaint(
+    complaintId: string,
+    cleanedPhotoUrl: string,
+    cleaningNote?: string,
+    workerName?: string
+  ): void {
+    const complaints = this.getComplaints();
+    const target = complaints.find(c => c.id === complaintId);
+    if (target) {
+      const now = new Date();
+      target.status = 'pending_verification';
+      target.adminResolvedPhotoUrl = cleanedPhotoUrl;
+      target.adminResolvedAt = now.toISOString();
+      target.adminResolvedNote = cleaningNote || 'Cleaned by municipal sanitation worker';
+      target.workerName = workerName || 'Ramesh Parmar (Ward Sanitation Worker)';
+      target.autoResolveDeadline = new Date(now.getTime() + 24 * 3600 * 1000).toISOString();
+      localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
+    }
+  }
+
+  /**
+   * Citizen cross-verification:
+   * - If confirmed = true: marks resolved with citizen live photo proof
+   * - If confirmed = false: marks reopened with citizen live photo proof + reason
+   */
+  static citizenVerifyResolution(
+    complaintId: string,
+    confirmed: boolean,
+    proofPhotoUrl: string,
+    reason?: string
+  ): void {
+    const complaints = this.getComplaints();
+    const target = complaints.find(c => c.id === complaintId);
+    if (target) {
+      const now = new Date().toISOString();
+      if (confirmed) {
+        target.status = 'resolved';
+        target.resolvedPhotoUrl = proofPhotoUrl;
+        target.resolvedAt = now;
+        target.resolvedNote = reason || 'Verified clean by citizen with camera proof';
+        target.citizenVerifiedAt = now;
+        target.citizenVerifiedStatus = 'confirmed';
+      } else {
+        target.status = 'reopened';
+        target.citizenVerifiedAt = now;
+        target.citizenVerifiedStatus = 'rejected';
+        target.citizenRejectPhotoUrl = proofPhotoUrl;
+        target.citizenRejectReason = reason || 'Citizen reported spot still unclean';
+        target.note = `Disputed by citizen: ${reason || 'Still unclean'}`;
+      }
+      localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
+    }
+  }
+
+  /**
+   * Citizen reopens a resolved or auto-resolved complaint
+   */
+  static reopenComplaint(
+    complaintId: string,
+    proofPhotoUrl: string,
+    reason?: string
+  ): void {
+    const complaints = this.getComplaints();
+    const target = complaints.find(c => c.id === complaintId);
+    if (target) {
+      const now = new Date().toISOString();
+      target.status = 'reopened';
+      target.reopenedAt = now;
+      target.reopenPhotoUrl = proofPhotoUrl;
+      target.reopenReason = reason || 'Reopened with fresh photo proof';
+      target.note = `Reopened on ${now}: ${reason || 'Issue persisted'}`;
       localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
     }
   }
