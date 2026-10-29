@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckCircle, MessageSquare, Copy, ExternalLink, Share2, MapPin, Send, PhoneCall } from 'lucide-react';
+import { X, CheckCircle, MessageSquare, Copy, Share2, MapPin } from 'lucide-react';
 import { translations, Language } from '../core/localization';
 import { Complaint } from '../types';
 
@@ -76,14 +76,6 @@ export const WhatsAppDispatchModal: React.FC<WhatsAppDispatchModalProps> = ({
 
   // General wa.me share link
   const generalShareUrl = `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`;
-  
-  // Direct wa.me to citizen's own number (if 10-12 digits)
-  const citizenDirectUrl = cleanCitizenPhone.length >= 10 
-    ? `https://wa.me/${cleanCitizenPhone}?text=${encodeURIComponent(whatsappMessage)}`
-    : generalShareUrl;
-
-  // Helpline wa.me (+91 94260 99001 GNP Control Room)
-  const helplineUrl = `https://wa.me/919426099001?text=${encodeURIComponent(whatsappMessage)}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(whatsappMessage);
@@ -156,27 +148,16 @@ export const WhatsAppDispatchModal: React.FC<WhatsAppDispatchModalProps> = ({
           {/* Button 1: Send / Open in WhatsApp */}
           <button
             onClick={() => openUrl(generalShareUrl)}
-            className="w-full h-12 rounded-full bg-[#25D366] hover:bg-[#1EBE5D] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg active:scale-95 transition"
+            className="w-full h-14 rounded-full bg-[#25D366] hover:bg-[#1EBE5D] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg active:scale-95 transition"
           >
-            <Share2 className="w-4 h-4" />
+            <Share2 className="w-5 h-5" />
             <span>{lang === 'gu' ? 'વ્હોટ્સએપ પર ટિકિટ મોકલો' : 'Send Ticket via WhatsApp'}</span>
           </button>
 
-          {/* Button 2: Send to Godhra Swachhata Helpline */}
-          <button
-            onClick={() => openUrl(helplineUrl)}
-            className="w-full h-11 rounded-full bg-[#111A14] hover:bg-black text-white text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition"
-          >
-            <Send className="w-3.5 h-3.5 text-[#6DB36F]" />
-            <span>
-              {lang === 'gu' ? 'કંટ્રોલ રૂમ (+91 94260 99001) ને મોકલો' : 'Forward to Helpline (+91 94260 99001)'}
-            </span>
-          </button>
-
-          {/* Button 3: Copy bilingual ticket message */}
+          {/* Button 2: Copy bilingual ticket message */}
           <button
             onClick={handleCopy}
-            className="w-full h-10 rounded-full border border-[#74897A] dark:border-[#5F7A68] text-[#14201A] dark:text-[#EAF2E6] font-semibold text-xs flex items-center justify-center gap-1.5 hover:bg-[#F3F6F2] dark:hover:bg-[#1E2E23] active:scale-95 transition"
+            className="w-full h-11 rounded-full border border-[#74897A] dark:border-[#5F7A68] text-[#14201A] dark:text-[#EAF2E6] font-semibold text-xs flex items-center justify-center gap-1.5 hover:bg-[#F3F6F2] dark:hover:bg-[#1E2E23] active:scale-95 transition"
           >
             {copied ? (
               <>
