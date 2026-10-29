@@ -1,10 +1,12 @@
-import { Complaint, CitizenCollectionFeedback, CitizenAddress } from '../types';
+import { Complaint, CitizenCollectionFeedback, AppTheme } from '../types';
 
 const STORAGE_KEYS = {
   DEVICE_ID: 'safai_sathi_device_id',
   WARD_ID: 'safai_sathi_selected_ward_id',
   CITIZEN_ADDRESS: 'safai_sathi_citizen_address_text',
   LANGUAGE: 'safai_sathi_language',
+  THEME: 'safai_sathi_theme_mode',
+  INTRO_SEEN: 'safai_sathi_intro_completed',
   PHONE: 'safai_sathi_verified_phone',
   COMPLAINTS: 'safai_sathi_my_complaints',
   MISSED_REPORTS: 'safai_sathi_missed_reports_by_date',
@@ -49,6 +51,23 @@ export class StorageService {
     localStorage.setItem(STORAGE_KEYS.LANGUAGE, lang);
   }
 
+  static getTheme(): AppTheme {
+    const theme = localStorage.getItem(STORAGE_KEYS.THEME) as AppTheme;
+    return theme || 'system';
+  }
+
+  static setTheme(theme: AppTheme): void {
+    localStorage.setItem(STORAGE_KEYS.THEME, theme);
+  }
+
+  static hasSeenIntro(): boolean {
+    return localStorage.getItem(STORAGE_KEYS.INTRO_SEEN) === 'true';
+  }
+
+  static setHasSeenIntro(seen: boolean): void {
+    localStorage.setItem(STORAGE_KEYS.INTRO_SEEN, seen ? 'true' : 'false');
+  }
+
   static getVerifiedPhone(): string | null {
     return localStorage.getItem(STORAGE_KEYS.PHONE);
   }
@@ -77,8 +96,19 @@ export class StorageService {
     }
     localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
 
-    // Also trigger mock sync for admin website if open in another tab
     window.dispatchEvent(new CustomEvent('safai_sathi_new_complaint', { detail: complaint }));
+  }
+
+  static markComplaintResolved(complaintId: string, resolvedPhotoUrl: string, resolvedNote?: string): void {
+    const complaints = this.getComplaints();
+    const target = complaints.find(c => c.id === complaintId);
+    if (target) {
+      target.status = 'resolved';
+      target.resolvedPhotoUrl = resolvedPhotoUrl;
+      target.resolvedAt = new Date().toISOString();
+      target.resolvedNote = resolvedNote;
+      localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
+    }
   }
 
   static updateComplaintStatus(complaintId: string, status: Complaint['status'], escalationLevel?: number): void {

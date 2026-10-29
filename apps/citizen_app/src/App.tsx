@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Ward, Van, Complaint } from './types';
+import { Ward, Van, Complaint, AppTheme } from './types';
 import { SEED_WARDS, SEED_VANS } from './core/seedData';
 import { StorageService } from './services/storageService';
 import { VanSimulationEngine, LocationCoords } from './services/simulationService';
@@ -11,10 +11,12 @@ import { MyComplaintsView } from './components/MyComplaintsView';
 import { SettingsView } from './components/SettingsView';
 import { ReportProblemSheet } from './components/ReportProblemSheet';
 import { PostCollectionModal } from './components/PostCollectionModal';
-import { BellRing, CheckCircle, WifiOff } from 'lucide-react';
+import { OnboardingModal } from './components/OnboardingModal';
+import { BellRing } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [lang, setLang] = useState<Language>(StorageService.getLanguage());
+  const [theme, setTheme] = useState<AppTheme>(StorageService.getTheme());
   const [currentTab, setCurrentTab] = useState<NavTab>('map');
   const [wardId, setWardId] = useState<string>(
     StorageService.getSelectedWardId() || SEED_WARDS[0].id
@@ -25,6 +27,7 @@ export const App: React.FC = () => {
 
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isPostCollectionOpen, setIsPostCollectionOpen] = useState(false);
+  const [isIntroOpen, setIsIntroOpen] = useState(!StorageService.hasSeenIntro());
   const [hasReportedMissed, setHasReportedMissed] = useState(
     StorageService.hasReportedMissedToday(wardId)
   );
@@ -37,7 +40,40 @@ export const App: React.FC = () => {
   const t = translations[lang];
   const selectedWard = SEED_WARDS.find(w => w.id === wardId) || SEED_WARDS[0];
 
-  // Request browser geolocation once on boot
+  // Theme Management (Light / Dark / System Default)
+  useEffect(() => {
+    const root = document.documentElement;
+
+    const applyThemePreference = (selectedTheme: AppTheme) => {
+      let isDark = false;
+      if (selectedTheme === 'dark') {
+        isDark = true;
+      } else if (selectedTheme === 'light') {
+        isDark = false;
+      } else {
+        // System preference
+        isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+
+      if (isDark) {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+    };
+
+    applyThemePreference(theme);
+
+    // Listen to OS system theme changes if theme === 'system'
+    if (theme === 'system' && window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = () => applyThemePreference('system');
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+  }, [theme]);
+
+  // Request browser geolocation on boot
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -45,7 +81,6 @@ export const App: React.FC = () => {
           setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         },
         _err => {
-          // Default to Godhra center
           setUserLocation({ lat: 22.7758, lng: 73.6149 });
         },
         { enableHighAccuracy: true, timeout: 5000 }
@@ -53,7 +88,7 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // Start Live Van GPS Simulation Engine
+  // Live Van GPS Simulation Engine
   useEffect(() => {
     VanSimulationEngine.startSimulation(3500);
 
@@ -67,11 +102,10 @@ export const App: React.FC = () => {
           visible: true,
           message:
             lang === 'gu'
-              ? `🚨 સફાઈ વાન (${van.plateNo}) તમારા વોર્ડ વિસ્તારમાં પહોંચી ગઈ છે!`
-              : `🚨 Sanitation Van (${van.plateNo}) has entered your ward area!`,
+              ? `🚨 સફાઈ વાન (${van.plateNo}) તમારા વિસ્તારમાં પહોંચી ગઈ છે!`
+              : `🚨 Sanitation Van (${van.plateNo}) has entered your area!`,
         });
 
-        // Trigger post-collection check prompt shortly after arrival
         setTimeout(() => {
           if (!StorageService.hasAnsweredFeedbackToday(wardId)) {
             setIsPostCollectionOpen(true);
@@ -93,6 +127,11 @@ export const App: React.FC = () => {
     StorageService.setLanguage(nextLang);
   };
 
+  const handleThemeChange = (newTheme: AppTheme) => {
+    setTheme(newTheme);
+    StorageService.setTheme(newTheme);
+  };
+
   const handleWardChange = (newWardId: string) => {
     setWardId(newWardId);
     StorageService.setSelectedWardId(newWardId);
@@ -101,6 +140,23 @@ export const App: React.FC = () => {
 
   const handleComplaintCreated = (newComplaint: Complaint) => {
     setComplaints(prev => [newComplaint, ...prev]);
+  };
+
+  const handleComplaintResolved = (complaintId: string, resolvedPhotoUrl: string, note?: string) => {
+    StorageService.markComplaintResolved(complaintId, resolvedPhotoUrl, note);
+    setComplaints(prev =>
+      prev.map(c =>
+        c.id === complaintId
+          ? {
+              ...c,
+              status: 'resolved',
+              resolvedPhotoUrl,
+              resolvedAt: new Date().toISOString(),
+              resolvedNote: note,
+            }
+          : c
+      )
+    );
   };
 
   const handleReportMissedVan = () => {
@@ -132,10 +188,10 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full h-[100dvh] bg-[#F3F6F2] text-[#14201A] flex flex-col overflow-hidden select-none font-sans">
+    <div className="relative w-full h-[100dvh] bg-[#F3F6F2] dark:bg-[#0E1612] text-[#14201A] dark:text-[#EAF2E6] flex flex-col overflow-hidden select-none font-sans transition-colors duration-200">
       {/* Top Arrival Alert Toast Banner */}
       {arrivalBanner.visible && (
-        <div className="absolute top-20 left-4 right-4 z-40 bg-[#111A14] text-white px-4 py-3 rounded-2xl shadow-elev3 border-2 border-[#1B7A3F] flex items-center justify-between animate-in slide-in-from-top">
+        <div className="absolute top-20 left-4 right-4 z-40 bg-[#111A14] dark:bg-[#16221B] text-white px-4 py-3 rounded-2xl shadow-elev3 border-2 border-[#1B7A3F] flex items-center justify-between animate-in slide-in-from-top">
           <div className="flex items-center gap-2.5">
             <BellRing className="w-5 h-5 text-[#F0873A] animate-bounce shrink-0" />
             <p className="text-xs font-bold leading-tight">
@@ -181,6 +237,7 @@ export const App: React.FC = () => {
             complaints={complaints}
             lang={lang}
             onOpenReport={() => setIsReportOpen(true)}
+            onComplaintResolved={handleComplaintResolved}
           />
         )}
 
@@ -193,11 +250,14 @@ export const App: React.FC = () => {
               setLang(newLang);
               StorageService.setLanguage(newLang);
             }}
+            theme={theme}
+            onThemeChange={handleThemeChange}
+            onOpenIntro={() => setIsIntroOpen(true)}
           />
         )}
       </main>
 
-      {/* Floating Pill Bottom Navigation (DESIGN.md 4.5) */}
+      {/* Floating Pill Bottom Navigation */}
       <PillNav
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
@@ -220,6 +280,13 @@ export const App: React.FC = () => {
         wardId={wardId}
         onClose={() => setIsPostCollectionOpen(false)}
         onSubmitSuccess={() => {}}
+        lang={lang}
+      />
+
+      {/* Onboarding / App Introduction Walkthrough */}
+      <OnboardingModal
+        isOpen={isIntroOpen}
+        onClose={() => setIsIntroOpen(false)}
         lang={lang}
       />
     </div>

@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Language, translations } from '../core/localization';
 import { StorageService } from '../services/storageService';
 import { GeoService } from '../services/simulationService';
-import { SEED_WARDS } from '../core/seedData';
-import { Globe, Shield, Check, Navigation, Home, Download, Smartphone, MapPin } from 'lucide-react';
-import { CONSTANTS } from '../core/constants';
+import { AppTheme } from '../types';
+import { Globe, Shield, Check, Navigation, Home, Moon, Sun, Monitor, HelpCircle, Sparkles } from 'lucide-react';
 
 interface SettingsViewProps {
   currentWardId: string;
   onWardChange: (wardId: string) => void;
   lang: Language;
   onLanguageChange: (lang: Language) => void;
+  theme: AppTheme;
+  onThemeChange: (theme: AppTheme) => void;
+  onOpenIntro: () => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -18,31 +20,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onWardChange,
   lang,
   onLanguageChange,
+  theme,
+  onThemeChange,
+  onOpenIntro,
 }) => {
   const t = translations[lang];
 
   const [addressInput, setAddressInput] = useState(StorageService.getCitizenAddress());
   const [addressSavedMsg, setAddressSavedMsg] = useState(false);
   const [gpsDetecting, setGpsDetecting] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
-  const [isAppInstalled, setIsAppInstalled] = useState(false);
-
-  useEffect(() => {
-    const handlePrompt = (e: any) => {
-      e.preventDefault();
-      setInstallPrompt(e);
-    };
-
-    window.addEventListener('beforeinstallprompt', handlePrompt);
-    window.addEventListener('appinstalled', () => {
-      setIsAppInstalled(true);
-      setInstallPrompt(null);
-    });
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handlePrompt);
-    };
-  }, []);
 
   const handleSaveAddress = () => {
     if (!addressInput.trim()) return;
@@ -86,50 +72,33 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     }
   };
 
-  const handleInstallApp = async () => {
-    if (installPrompt) {
-      installPrompt.prompt();
-      const choice = await installPrompt.userChoice;
-      if (choice.outcome === 'accepted') {
-        setIsAppInstalled(true);
-      }
-      setInstallPrompt(null);
-    } else {
-      alert(
-        lang === 'gu'
-          ? 'તમારા બ્રાઉઝર મેનૂમાંથી "Add to Home Screen" અથવા "Install" પર ક્લિક કરો.'
-          : 'Tap your browser menu (⋮) and select "Add to Home screen" or "Install App".'
-      );
-    }
-  };
-
   return (
     <div className="w-full flex-1 flex flex-col p-5 pb-28 gap-5 max-w-lg mx-auto">
       {/* Title */}
       <div className="pt-2">
-        <h1 className="text-3xl font-light text-[#14201A] tracking-tight">
+        <h1 className="text-3xl font-light text-[#14201A] dark:text-[#EAF2E6] tracking-tight">
           {t.settings}
         </h1>
-        <p className="text-xs text-[#566259] mt-1">
-          {lang === 'gu' ? 'સરનામું અને સામાન્ય પસંદગીઓ' : 'Residence address & preferences'}
+        <p className="text-xs text-[#566259] dark:text-[#9DB0A2] mt-1">
+          {lang === 'gu' ? 'સરનામું, થીમ અને પસંદગીઓ' : 'Residence address, theme & preferences'}
         </p>
       </div>
 
-      {/* 1. Address / Locality Setup (No raw ward dropdown) */}
-      <div className="bg-white p-5 rounded-[28px] border border-[#DCE5D9] shadow-elev1 flex flex-col gap-3.5">
+      {/* 1. Address / Locality Setup */}
+      <div className="bg-white dark:bg-[#16221B] p-5 rounded-[28px] border border-[#DCE5D9] dark:border-[#2A3B31] shadow-elev1 flex flex-col gap-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Home className="w-5 h-5 text-[#1B7A3F]" />
-            <h3 className="text-sm font-bold text-[#14201A]">
+            <Home className="w-5 h-5 text-[#1B7A3F] dark:text-[#6DB36F]" />
+            <h3 className="text-sm font-bold text-[#14201A] dark:text-[#EAF2E6]">
               {t.myAddressTitle}
             </h3>
           </div>
-          <span className="text-[11px] font-semibold text-[#1B7A3F] bg-[#E4F1DF] px-2.5 py-0.5 rounded-full">
+          <span className="text-[11px] font-semibold text-[#1B7A3F] dark:text-[#6DB36F] bg-[#E4F1DF] dark:bg-[#1F3A2A] px-2.5 py-0.5 rounded-full">
             Godhra Citizen
           </span>
         </div>
 
-        <p className="text-xs text-[#566259]">
+        <p className="text-xs text-[#566259] dark:text-[#9DB0A2]">
           {lang === 'gu'
             ? 'તમારું ઘર અથવા શેરીનું સરનામું ઉમેરો જેથી કચરા કલેક્શન અને ફરિયાદ નિવારણ ચોક્કસ થાય.'
             : 'Add your home or street address to route sanitation vehicles and complaints accurately.'}
@@ -141,13 +110,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             value={addressInput}
             onChange={e => setAddressInput(e.target.value)}
             placeholder={t.addressPlaceholder}
-            className="w-full h-13 px-4 rounded-[18px] bg-white border-2 border-[#74897A] focus:border-[#1B7A3F] focus:outline-none text-xs text-[#14201A]"
+            className="w-full h-13 px-4 rounded-[18px] bg-white dark:bg-[#0E1612] border-2 border-[#74897A] dark:border-[#5F7A68] focus:border-[#1B7A3F] focus:outline-none text-xs text-[#14201A] dark:text-[#EAF2E6]"
           />
 
           <div className="flex gap-2">
             <button
               onClick={handleSaveAddress}
-              className="flex-1 h-11 rounded-full bg-[#111A14] text-white text-xs font-bold active:scale-95 transition shadow"
+              className="flex-1 h-11 rounded-full bg-[#111A14] dark:bg-[#F2F7EE] text-white dark:text-[#111A14] text-xs font-bold active:scale-95 transition shadow"
             >
               {t.saveAddress}
             </button>
@@ -155,7 +124,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <button
               onClick={handleGpsAutoMatch}
               disabled={gpsDetecting}
-              className="h-11 px-4 rounded-full bg-[#E4F1DF] text-[#1B7A3F] text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition"
+              className="h-11 px-4 rounded-full bg-[#E4F1DF] dark:bg-[#1F3A2A] text-[#1B7A3F] dark:text-[#6DB36F] text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition"
               title="Detect via GPS"
             >
               <Navigation className={`w-3.5 h-3.5 ${gpsDetecting ? 'animate-spin' : ''}`} />
@@ -164,7 +133,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           {addressSavedMsg && (
-            <p className="text-xs p-2.5 rounded-xl bg-[#E4F1DF] text-[#1B7A3F] font-semibold flex items-center gap-1.5 animate-in fade-in">
+            <p className="text-xs p-2.5 rounded-xl bg-[#E4F1DF] dark:bg-[#1F3A2A] text-[#1B7A3F] dark:text-[#6DB36F] font-semibold flex items-center gap-1.5 animate-in fade-in">
               <Check className="w-4 h-4" />
               <span>{t.addressSaved}</span>
             </p>
@@ -172,11 +141,71 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </div>
 
-      {/* 2. Language Toggle Card */}
-      <div className="bg-white p-5 rounded-[28px] border border-[#DCE5D9] shadow-elev1 flex flex-col gap-3">
+      {/* 2. Theme Setting Card (Dark / Light / System) */}
+      <div className="bg-white dark:bg-[#16221B] p-5 rounded-[28px] border border-[#DCE5D9] dark:border-[#2A3B31] shadow-elev1 flex flex-col gap-3">
         <div className="flex items-center gap-2">
-          <Globe className="w-5 h-5 text-[#1B7A3F]" />
-          <h3 className="text-sm font-bold text-[#14201A]">
+          {theme === 'dark' ? (
+            <Moon className="w-5 h-5 text-[#6DB36F]" />
+          ) : theme === 'light' ? (
+            <Sun className="w-5 h-5 text-[#F0873A]" />
+          ) : (
+            <Monitor className="w-5 h-5 text-[#1B7A3F]" />
+          )}
+          <h3 className="text-sm font-bold text-[#14201A] dark:text-[#EAF2E6]">
+            {t.theme.title}
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 mt-1">
+          {/* Light */}
+          <button
+            onClick={() => onThemeChange('light')}
+            className={`h-11 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95 ${
+              theme === 'light'
+                ? 'bg-[#111A14] text-white shadow'
+                : 'bg-[#F3F6F2] dark:bg-[#1E2D24] text-[#14201A] dark:text-[#EAF2E6] border border-[#DCE5D9] dark:border-[#2A3B31]'
+            }`}
+          >
+            <Sun className="w-3.5 h-3.5" />
+            <span>Light</span>
+            {theme === 'light' && <Check className="w-3.5 h-3.5 text-[#6DB36F]" />}
+          </button>
+
+          {/* Dark */}
+          <button
+            onClick={() => onThemeChange('dark')}
+            className={`h-11 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95 ${
+              theme === 'dark'
+                ? 'bg-[#6DB36F] text-[#111A14] shadow'
+                : 'bg-[#F3F6F2] dark:bg-[#1E2D24] text-[#14201A] dark:text-[#EAF2E6] border border-[#DCE5D9] dark:border-[#2A3B31]'
+            }`}
+          >
+            <Moon className="w-3.5 h-3.5" />
+            <span>Dark</span>
+            {theme === 'dark' && <Check className="w-3.5 h-3.5 text-[#111A14]" />}
+          </button>
+
+          {/* System */}
+          <button
+            onClick={() => onThemeChange('system')}
+            className={`h-11 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95 ${
+              theme === 'system'
+                ? 'bg-[#111A14] dark:bg-[#F2F7EE] text-white dark:text-[#111A14] shadow'
+                : 'bg-[#F3F6F2] dark:bg-[#1E2D24] text-[#14201A] dark:text-[#EAF2E6] border border-[#DCE5D9] dark:border-[#2A3B31]'
+            }`}
+          >
+            <Monitor className="w-3.5 h-3.5" />
+            <span>System</span>
+            {theme === 'system' && <Check className="w-3.5 h-3.5 text-[#6DB36F]" />}
+          </button>
+        </div>
+      </div>
+
+      {/* 3. Language Toggle Card */}
+      <div className="bg-white dark:bg-[#16221B] p-5 rounded-[28px] border border-[#DCE5D9] dark:border-[#2A3B31] shadow-elev1 flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <Globe className="w-5 h-5 text-[#1B7A3F] dark:text-[#6DB36F]" />
+          <h3 className="text-sm font-bold text-[#14201A] dark:text-[#EAF2E6]">
             {lang === 'gu' ? 'એપ્લિકેશન ભાષા / Language' : 'Application Language'}
           </h3>
         </div>
@@ -186,8 +215,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => onLanguageChange('gu')}
             className={`h-12 rounded-full text-xs font-bold flex items-center justify-center gap-2 transition active:scale-95 ${
               lang === 'gu'
-                ? 'bg-[#111A14] text-white shadow'
-                : 'bg-[#F3F6F2] text-[#14201A] border border-[#DCE5D9]'
+                ? 'bg-[#111A14] dark:bg-[#F2F7EE] text-white dark:text-[#111A14] shadow'
+                : 'bg-[#F3F6F2] dark:bg-[#1E2D24] text-[#14201A] dark:text-[#EAF2E6] border border-[#DCE5D9] dark:border-[#2A3B31]'
             }`}
           >
             <span>ગુજરાતી (Gujarati)</span>
@@ -198,8 +227,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => onLanguageChange('en')}
             className={`h-12 rounded-full text-xs font-bold flex items-center justify-center gap-2 transition active:scale-95 ${
               lang === 'en'
-                ? 'bg-[#111A14] text-white shadow'
-                : 'bg-[#F3F6F2] text-[#14201A] border border-[#DCE5D9]'
+                ? 'bg-[#111A14] dark:bg-[#F2F7EE] text-white dark:text-[#111A14] shadow'
+                : 'bg-[#F3F6F2] dark:bg-[#1E2D24] text-[#14201A] dark:text-[#EAF2E6] border border-[#DCE5D9] dark:border-[#2A3B31]'
             }`}
           >
             <span>English</span>
@@ -208,48 +237,35 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </div>
 
-      {/* 3. Download / Install App Card */}
-      <div className="bg-gradient-to-br from-[#111A14] to-[#1E2D24] text-white p-5 rounded-[28px] shadow-elev2 flex flex-col gap-3 border border-[#6DB36F]/30">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Smartphone className="w-5 h-5 text-[#6DB36F]" />
-            <h3 className="text-sm font-bold text-white">
-              {lang === 'gu' ? 'એપ્લિકેશન ડાઉનલોડ / ઇન્સ્ટોલ કરો' : 'Install Standalone Mobile App'}
-            </h3>
+      {/* 4. App Introduction Replay Option */}
+      <button
+        onClick={onOpenIntro}
+        className="bg-white dark:bg-[#16221B] p-4 rounded-[24px] border border-[#DCE5D9] dark:border-[#2A3B31] shadow-elev1 flex items-center justify-between text-left hover:border-[#1B7A3F]/50 transition active:scale-[0.99]"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#E4F1DF] dark:bg-[#1F3A2A] text-[#1B7A3F] dark:text-[#6DB36F] flex items-center justify-center">
+            <Sparkles className="w-5 h-5" />
           </div>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1B7A3F] text-white">
-            PWA / Mobile
-          </span>
+          <div>
+            <h4 className="text-xs font-bold text-[#14201A] dark:text-[#EAF2E6]">
+              {t.intro.revisitIntro}
+            </h4>
+            <p className="text-[11px] text-[#566259] dark:text-[#9DB0A2]">
+              {lang === 'gu' ? 'એપ્લિકેશનના મુખ્ય ફિચર્સનો પરિચય' : 'View the guided feature walkthrough'}
+            </p>
+          </div>
         </div>
+      </button>
 
-        <p className="text-xs text-[#DCE5D9] leading-relaxed">
-          {lang === 'gu'
-            ? 'આ એપ્લિકેશનને તમારા ફોનની હોમ સ્ક્રીન પર સીધી ઇન્સ્ટોલ કરો જેથી ઈન્ટરનેટ ધીમું હોય ત્યારે પણ ઝડપથી ખુલે.'
-            : 'Install directly to your mobile home screen for instantaneous loading and offline access.'}
-        </p>
-
-        <button
-          onClick={handleInstallApp}
-          className="h-12 rounded-full bg-[#6DB36F] hover:bg-[#5FA361] text-[#111A14] font-bold text-xs flex items-center justify-center gap-2 transition active:scale-95 shadow"
-        >
-          <Download className="w-4 h-4 text-[#111A14]" />
-          <span>
-            {isAppInstalled
-              ? (lang === 'gu' ? '✓ એપ ઇન્સ્ટોલ કરેલ છે' : '✓ App Installed')
-              : (lang === 'gu' ? 'મોબાઇલમાં ઇન્સ્ટોલ કરો' : 'Install App to Phone')}
-          </span>
-        </button>
-      </div>
-
-      {/* 4. Municipal Authority Governance Note (No personal inspector phone numbers) */}
-      <div className="bg-[#E4F1DF]/80 p-5 rounded-[28px] border border-[#1B7A3F]/30 flex flex-col gap-2.5">
-        <div className="flex items-center gap-2 text-[#1B7A3F]">
+      {/* 5. Municipal Authority Governance Note */}
+      <div className="bg-[#E4F1DF]/80 dark:bg-[#1F3A2A]/80 p-5 rounded-[28px] border border-[#1B7A3F]/30 dark:border-[#6DB36F]/30 flex flex-col gap-2.5">
+        <div className="flex items-center gap-2 text-[#1B7A3F] dark:text-[#6DB36F]">
           <Shield className="w-5 h-5" />
           <h4 className="text-xs font-bold uppercase tracking-wider">
             {lang === 'gu' ? 'પંચમહાલ જિલ્લા વહીવટી તંત્ર' : 'District Administration Panchmahal'}
           </h4>
         </div>
-        <p className="text-xs text-[#14201A] leading-relaxed">
+        <p className="text-xs text-[#14201A] dark:text-[#EAF2E6] leading-relaxed">
           {lang === 'gu'
             ? 'સ્વચ્છતા સાથી એ ગોધરા નગરપાલિકા અને જિલ્લા પંચાયતનું સત્તાવાર પ્લેટફોર્મ છે. તમામ ફરિયાદો ૨૪-૪૮ કલાકના SLA હેઠળ મોનિટર થાય છે.'
             : 'Official civic platform for Godhra Nagarpalika and District Panchayat. All tickets are bound by a 24-48 hour resolution SLA.'}

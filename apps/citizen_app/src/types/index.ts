@@ -15,7 +15,7 @@ export interface Ward {
   inspectorId: string;
   inspectorName: string;
   inspectorPhone: string;
-  escalationTo: string; // Chief Officer or TDO
+  escalationTo: string;
   escalationName: string;
   escalationPhone: string;
 }
@@ -73,7 +73,6 @@ export interface Trip {
   mockLocationDetected: boolean;
 }
 
-// Extended Complaint Categories per user requirement
 export type ComplaintCategory =
   | 'garbage_dump'
   | 'open_gutter'
@@ -106,15 +105,18 @@ export interface Complaint {
   assignedTo: string;
   assignedName?: string;
   assignedPhone?: string;
-  escalationLevel: number; // 0 = Inspector, 1 = Chief Officer / TDO, 2 = DDO
+  escalationLevel: number;
   escalatedToName?: string;
   escalatedToPhone?: string;
   resolvedPhotoUrl?: string;
   resolvedAt?: string;
+  resolvedNote?: string;
   mergedInto?: string;
   note?: string;
   slaDeadline?: string;
 }
+
+export type AppTheme = 'light' | 'dark' | 'system';
 
 export interface Staff {
   id: string;

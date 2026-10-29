@@ -9,6 +9,13 @@
   --color-bg: #F3F6F2;
 }
 
+.dark {
+  --color-primary: #F2F7EE;
+  --color-brand: #6DB36F;
+  --color-accent: #F0873A;
+  --color-bg: #0E1612;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -19,11 +26,24 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.dark body {
+  background-color: #0E1612;
+  color: #EAF2E6;
+}
+
 /* Custom Leaflet overrides */
 .leaflet-container {
   width: 100%;
   height: 100%;
   background-color: #E9F1E6;
+}
+
+.dark .leaflet-container {
+  background-color: #16221B;
+}
+
+.dark .leaflet-tile {
+  filter: brightness(0.7) invert(1) contrast(1.2) hue-rotate(170deg) saturate(0.6);
 }
 
 .custom-van-marker,
