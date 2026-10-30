@@ -98,6 +98,7 @@ export interface Complaint {
   id: string;
   ticketId: string;
   deviceId: string;
+  syncStatus?: 'synced' | 'pending_sync';
   phone?: string;
   category: ComplaintCategory;
   categoryCustomTitle?: string;

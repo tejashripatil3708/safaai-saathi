@@ -101,6 +101,12 @@ export class StorageService {
   static saveComplaint(complaint: Complaint): void {
     const complaints = this.getComplaints();
     const existingIndex = complaints.findIndex(c => c.id === complaint.id);
+    
+    // Tag sync status
+    if (!complaint.syncStatus) {
+      complaint.syncStatus = navigator.onLine ? 'synced' : 'pending_sync';
+    }
+
     if (existingIndex >= 0) {
       complaints[existingIndex] = complaint;
     } else {
@@ -109,9 +115,43 @@ export class StorageService {
     localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
 
     // Asynchronously synchronize with Firestore for Municipal Admin Web Portal
-    firebaseService.syncComplaintToCloud(complaint).catch(() => {});
+    firebaseService.syncComplaintToCloud(complaint)
+      .then(res => {
+        if (res.success) {
+          StorageService.updateComplaintSyncStatus(complaint.id, 'synced');
+        }
+      })
+      .catch(() => {
+        StorageService.updateComplaintSyncStatus(complaint.id, 'pending_sync');
+      });
 
     window.dispatchEvent(new CustomEvent('safai_sathi_new_complaint', { detail: complaint }));
+  }
+
+  static updateComplaintSyncStatus(complaintId: string, syncStatus: 'synced' | 'pending_sync'): void {
+    const complaints = this.getComplaints();
+    const target = complaints.find(c => c.id === complaintId);
+    if (target && target.syncStatus !== syncStatus) {
+      target.syncStatus = syncStatus;
+      localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
+      window.dispatchEvent(new CustomEvent('safai_sathi_complaints_synced', { detail: complaints }));
+    }
+  }
+
+  static async retryPendingSync(): Promise<void> {
+    const complaints = this.getComplaints();
+    const pending = complaints.filter(c => c.syncStatus === 'pending_sync');
+    if (pending.length === 0) return;
+
+    console.log(`🌐 Network restored: auto-syncing ${pending.length} pending offline tickets to Firestore...`);
+    for (const item of pending) {
+      const res = await firebaseService.syncComplaintToCloud(item);
+      if (res.success) {
+        item.syncStatus = 'synced';
+      }
+    }
+    localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
+    window.dispatchEvent(new CustomEvent('safai_sathi_complaints_synced', { detail: complaints }));
   }
 
   static markComplaintResolved(complaintId: string, resolvedPhotoUrl: string, resolvedNote?: string): void {
@@ -298,4 +338,10 @@ export class StorageService {
       return false;
     }
   }
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    StorageService.retryPendingSync();
+  });
 }

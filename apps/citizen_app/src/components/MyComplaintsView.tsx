@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { firebaseService } from '../services/firebaseService';
 import { Complaint } from '../types';
 import { Language, translations } from '../core/localization';
 import { StatusChip } from './StatusChip';
@@ -24,6 +25,25 @@ export const MyComplaintsView: React.FC<MyComplaintsViewProps> = ({
   const [selectedComplaintId, setSelectedComplaintId] = useState<string | null>(null);
 
   const selectedComplaint = complaints.find(c => c.id === selectedComplaintId) || null;
+
+  // Real-time Firestore sync listener for active tickets
+  useEffect(() => {
+    const unsubscribers: (() => void)[] = [];
+    complaints.forEach(item => {
+      if (item.status !== 'resolved' && item.status !== 'auto_resolved') {
+        const unsub = firebaseService.listenToTicketUpdates(item.id, updated => {
+          if (onComplaintUpdated && Object.keys(updated).length > 0) {
+            onComplaintUpdated({ ...item, ...updated } as Complaint);
+          }
+        });
+        unsubscribers.push(unsub);
+      }
+    });
+
+    return () => {
+      unsubscribers.forEach(u => u());
+    };
+  }, [complaints.map(c => c.id + c.status).join(',')]);
 
   return (
     <div className="w-full flex-1 flex flex-col p-5 pb-28 gap-4 max-w-lg mx-auto">
@@ -113,11 +133,22 @@ export const MyComplaintsView: React.FC<MyComplaintsViewProps> = ({
                   </h4>
 
                   <div className="flex items-center justify-between">
-                    <StatusChip
-                      status={complaint.status}
-                      lang={lang}
-                      escalationLevel={complaint.escalationLevel}
-                    />
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <StatusChip
+                        status={complaint.status}
+                        lang={lang}
+                        escalationLevel={complaint.escalationLevel}
+                      />
+                      {complaint.syncStatus === 'synced' ? (
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#E4F1DF] text-[#1B7A3F] flex items-center gap-0.5">
+                          <span>☁️ Synced</span>
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#FFEBD9] text-[#F0873A] flex items-center gap-0.5">
+                          <span>⏳ Offline</span>
+                        </span>
+                      )}
+                    </div>
                     <ChevronRight className="w-4 h-4 text-[#74897A] dark:text-[#5F7A68]" />
                   </div>
                 </div>

@@ -1,19 +1,19 @@
 /**
- * Safaai Saathi - Firebase Firestore Integration Service
+ * Safaai Saathi - Firebase Firestore & Auth Integration Service
  * Enables cloud synchronization of citizen sanitation tickets
  * and provides real-time integration with the Admin Web Dashboard.
  */
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import {
   getFirestore,
-  collection,
   doc,
   setDoc,
   onSnapshot,
   Firestore,
   serverTimestamp,
 } from 'firebase/firestore';
-import { Complaint } from '../types';
+import { getAuth, signInAnonymously, onAuthStateChanged, Auth, User } from 'firebase/auth';
+import { Complaint, CitizenCollectionFeedback } from '../types';
 
 // Default Firebase Configuration (reads from Vite env or fallback to project defaults)
 const firebaseConfig = {
@@ -28,6 +28,8 @@ const firebaseConfig = {
 class FirebaseService {
   private app: FirebaseApp | null = null;
   private db: Firestore | null = null;
+  private auth: Auth | null = null;
+  private currentUser: User | null = null;
   private isConfigured: boolean = false;
 
   constructor() {
@@ -38,12 +40,32 @@ class FirebaseService {
     try {
       this.app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
       this.db = getFirestore(this.app);
+      this.auth = getAuth(this.app);
       this.isConfigured = true;
+
+      // Authenticate citizen anonymously to satisfy Firestore security rules (request.auth.uid)
+      signInAnonymously(this.auth)
+        .then((cred) => {
+          this.currentUser = cred.user;
+          console.log(`🔐 Safaai Saathi Anonymous Auth Active (UID: ${cred.user.uid.slice(0, 8)}...)`);
+        })
+        .catch((authErr) => {
+          console.warn('Anonymous auth fallback in offline mode:', authErr?.message || authErr);
+        });
+
+      onAuthStateChanged(this.auth, (user) => {
+        this.currentUser = user;
+      });
+
       console.log('✅ Safaai Saathi Firestore Service Initialized (Ready for Admin Dashboard integration)');
     } catch (err) {
       console.warn('Firebase initialization in offline/fallback mode:', err);
       this.isConfigured = false;
     }
+  }
+
+  public getUid(): string | null {
+    return this.currentUser?.uid || null;
   }
 
   /**
@@ -56,10 +78,13 @@ class FirebaseService {
     }
 
     try {
+      // Ensure complaint deviceId matches authenticated auth.uid per firestore.rules line 62
+      const authUid = this.currentUser?.uid || complaint.deviceId;
       const docRef = doc(this.db, 'complaints', complaint.id);
       
       const firestorePayload = {
         ...complaint,
+        deviceId: authUid,
         serverReceivedAt: serverTimestamp(),
         syncSource: 'citizen_pwa_client',
       };
@@ -70,6 +95,21 @@ class FirebaseService {
     } catch (error) {
       console.warn(`Firestore sync queued locally for ticket ${complaint.ticketId}:`, error);
       return { success: false, cloudId: complaint.id };
+    }
+  }
+
+  /**
+   * Sync collection audit feedback to Firestore
+   */
+  async syncFeedbackToCloud(feedback: CitizenCollectionFeedback): Promise<boolean> {
+    if (!this.db || !this.isConfigured) return false;
+    try {
+      const docId = `${feedback.date}_${feedback.wardId}_${feedback.deviceId.slice(0, 10)}`;
+      const docRef = doc(this.db, 'collectionFeedback', docId);
+      await setDoc(docRef, { ...feedback, serverReceivedAt: serverTimestamp() }, { merge: true });
+      return true;
+    } catch {
+      return false;
     }
   }
 
