@@ -61,12 +61,25 @@ service cloud.firestore {
         && request.resource.data.escalationLevel == 0
         && request.resource.data.deviceId == request.auth.uid;
         
-      function isValidCitizenStatusTransition() {
-        let oldStatus = resource.data.status;
-        let newStatus = request.resource.data.status;
-        return (oldStatus == 'pending_verification' && newStatus in ['resolved', 'reopened'])
-            || (oldStatus in ['resolved', 'auto_resolved'] && newStatus == 'reopened')
-            || (oldStatus == newStatus);
+      function isCitizenResolutionVerification() {
+        let isConfirm = request.resource.data.status == 'resolved' 
+          && request.resource.data.citizenVerifiedStatus == 'confirmed'
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'citizenVerifiedStatus', 'citizenVerifiedAt', 'resolvedPhotoUrl', 'resolvedNote', 'resolvedAt']);
+              
+        let isDispute = request.resource.data.status == 'reopened' 
+          && request.resource.data.citizenVerifiedStatus == 'rejected'
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'citizenVerifiedStatus', 'citizenVerifiedAt', 'citizenRejectReason', 'citizenRejectPhotoUrl', 'note']);
+
+        return resource.data.status == 'pending_verification' && (isConfirm || isDispute);
+      }
+
+      function isCitizenTicketReopen() {
+        return resource.data.status in ['resolved', 'auto_resolved']
+          && request.resource.data.status == 'reopened'
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'reopenedAt', 'reopenPhotoUrl', 'reopenReason', 'note']);
       }
 
       // Citizens can strictly verify or reopen their own ticket; staff can update all fields
@@ -74,9 +87,7 @@ service cloud.firestore {
         isAuthenticated()
         && resource.data.deviceId == request.auth.uid
         && request.resource.data.deviceId == resource.data.deviceId
-        && isValidCitizenStatusTransition()
-        && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['status', 'citizenVerifiedStatus', 'citizenVerifiedAt', 'citizenRejectReason', 'citizenRejectPhotoUrl', 'resolvedPhotoUrl', 'resolvedNote', 'resolvedAt', 'reopenedAt', 'reopenPhotoUrl', 'reopenReason', 'note'])
+        && (isCitizenResolutionVerification() || isCitizenTicketReopen())
       );
       allow delete: if false;
     }

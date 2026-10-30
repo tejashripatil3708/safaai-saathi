@@ -196,9 +196,10 @@ export const OtpModal: React.FC<OtpModalProps> = ({
                 placeholder="123456"
                 className="w-full h-14 text-center tracking-[0.5em] text-2xl font-bold rounded-[20px] bg-white border-2 border-[#1B7A3F] focus:outline-none text-[#14201A]"
               />
-              <div className="mt-2 text-center text-xs text-[#566259]">
-                {lang === 'gu' ? 'ચકાસણી OTP:' : 'Verification OTP:'}{' '}
-                <strong className="text-[#1B7A3F] font-mono text-sm">123456</strong>
+              <div className="mt-2.5 flex items-center justify-center gap-1.5 text-xs text-[#566259] bg-[#F2F7EE] py-1 px-3 rounded-full border border-[#DCE5D9] mx-auto w-fit">
+                <span className="text-[10px] uppercase font-bold tracking-wider bg-[#1B7A3F]/15 text-[#1B7A3F] px-1.5 py-0.5 rounded">DEMO</span>
+                <span>{lang === 'gu' ? 'ચકાસણી કોડ:' : 'Evaluation Code:'}</span>
+                <strong className="text-[#1B7A3F] font-mono font-bold text-sm">123456</strong>
               </div>
             </div>
 

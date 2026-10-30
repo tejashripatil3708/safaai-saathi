@@ -278,6 +278,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             : 'Official civic platform for Godhra Nagarpalika and District Panchayat. All tickets are bound by a 24-48 hour resolution SLA.'}
         </p>
       </div>
+
+      {/* 6. Demo Environment & Cloud Sync Status (Transparency for Hackathon Jury) */}
+      <div className="bg-[#F3F6F2] dark:bg-[#1A261F] p-4 rounded-[24px] border border-[#DCE5D9] dark:border-[#2A3B31] flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#566259] dark:text-[#9DB0A2]">
+            {lang === 'gu' ? 'ડેમો સ્થિતિ અને ક્લાઉડ કનેક્શન' : 'Demo Mode & Cloud Sync Status'}
+          </span>
+          <span className="text-[10px] font-mono font-bold bg-[#E4F1DF] dark:bg-[#1F3A2A] text-[#1B7A3F] dark:text-[#6DB36F] px-2 py-0.5 rounded-full">
+            safai-saathi-panchmahal
+          </span>
+        </div>
+        <p className="text-[11px] text-[#566259] dark:text-[#9DB0A2] leading-relaxed">
+          {lang === 'gu'
+            ? 'લાઇવ GPS, કેમેરા વૉટરમાર્ક અને ઑફલાઇન સંગ્રહ ઉપકરણ પર કાર્યરત છે. મૂલ્યાંકન સરળતા માટે OTP (123456) અને વાન માર્ગ સિમ્યુલેટેડ છે.'
+            : 'Live GPS, camera watermarks, and offline storage run on-device. Evaluation OTP (123456) and van routes are simulated for reproducible hackathon judging.'}
+        </p>
+      </div>
     </div>
   );
 };

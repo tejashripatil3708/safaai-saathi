@@ -103,6 +103,10 @@ export const PostCollectionModal: React.FC<PostCollectionModalProps> = ({
             <h4 className="text-lg font-bold text-[#14201A]">
               {t.feedbackThanks}
             </h4>
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E4F1DF] text-[#1B7A3F] text-xs font-bold border border-[#1B7A3F]/30">
+              <span>☁️</span>
+              <span>{lang === 'gu' ? 'ઓડિટ ક્લાઉડમાં નોંધાયું / સુમેળ થયું' : 'Audit Queued & Synced to Cloud'}</span>
+            </div>
             <p className="text-xs text-[#566259]">
               {lang === 'gu'
                 ? 'આ ડેટા સીધો DDO કચેરીના મોનિટરિંગ ડેશબોર્ડમાં નોંધાયો છે.'

@@ -115,6 +115,7 @@ class FirebaseService {
       
       const firestorePayload = {
         ...complaint,
+        syncStatus: 'synced',
         deviceId: authUid,
         serverReceivedAt: serverTimestamp(),
         syncSource: 'citizen_pwa_client',
@@ -139,7 +140,12 @@ class FirebaseService {
       if (!authUid) return false;
       const docId = `${feedback.date}_${feedback.wardId}_${authUid.slice(0, 10)}`;
       const docRef = doc(this.db, 'collectionFeedback', docId);
-      await setDoc(docRef, { ...feedback, deviceId: authUid, serverReceivedAt: serverTimestamp() }, { merge: true });
+      await setDoc(docRef, { 
+        ...feedback, 
+        syncStatus: 'synced', 
+        deviceId: authUid, 
+        serverReceivedAt: serverTimestamp() 
+      }, { merge: true });
       return true;
     } catch {
       return false;

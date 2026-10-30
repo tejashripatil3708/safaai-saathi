@@ -189,12 +189,37 @@ Open `apps/citizen_app/android` in Android Studio (or run `./gradlew assembleDeb
 
 ---
 
-## 🏆 Demo Shortcuts for SFIC Hackathon Judges
-- **Live Van Movement**: The built-in simulation engine automatically moves Van `GJ-17-GA-1001` through the Godhra North corridor, updates speed and distance in real time, and triggers the arrival sound chime when approaching within 500m of the citizen's ward.
-- **High-Precision Auto-Detected GPS Report**: Tap the red center button **"Report Issue"** — notice the latitude/longitude telemetry is automatically resolved and strictly locked with the `🔒 LOCKED` badge.
-- **OTP Verification**: Enter any 10-digit Indian phone number (e.g., `9876543210`) and use demo OTP `123456`.
-- **WhatsApp Share**: Tap "Open WhatsApp" after submitting a report to view the formatted ticket message with live tracking link.
-- **Escalation Demo**: View any complaint in "My Complaints" to observe the resolution SLA timeline and direct authority escalation contact buttons.
+## 🏆 Demo Shortcuts & Boundaries for SFIC Hackathon Judges
+
+To ensure transparent evaluation, Safaai Saathi cleanly differentiates **live production modules** from **simulated hackathon demo modules**:
+
+| Module | Execution Layer | Live Implementation vs Simulated Demo Boundary |
+| :--- | :--- | :--- |
+| **GPS Telemetry** | Native On-Device | **Live**: High-accuracy `navigator.geolocation` locked to ward boundary. |
+| **Photo Evidence** | Native On-Device | **Live**: Direct camera stream with burnt-in GPS/timestamp canvas watermark. Gallery disabled. |
+| **Offline Queue** | Browser / SQLite | **Live**: Durable local storage queue with automatic retry on network restore. |
+| **Cloud Firestore** | Cloud Backend | **Live**: Anonymous Auth (`ensureAuth()`) syncing to `safai-saathi-panchmahal`. |
+| **Phone Verification**| Client Interface | **Simulated for Demo**: Enter 10-digit mobile + evaluation code `123456` (avoids SMS gateway costs during judging). |
+| **Van Movement** | Math Simulation | **Simulated for Demo**: 4-second waypoint timer simulating telemetry across Godhra North and Rural Panchayats. |
+
+---
+
+## 📋 Hackathon Judge Demo Checklist (6-Step Verification)
+
+Before judging, evaluators can execute this concise 6-step walkthrough from a clean browser or device:
+
+1. **Submit a Complaint Ticket**:
+   Tap **"Report Issue"**, capture a live camera snapshot, select category, enter phone number, and verify with demo code `123456`. An official ticket ID (`PMH-YYYYMMDD-NNNN`) is generated.
+2. **Persistence Test**:
+   Close the tab/app entirely and reopen it. Go to **"My Complaints"** — confirm the ticket is persisted with full details and photo evidence.
+3. **Offline Queue Test**:
+   Toggle device to **Airplane Mode** (or DevTools Offline). Submit a new complaint. Observe the immediate amber **`⏳ Offline`** badge.
+4. **Cloud Auto-Sync Test**:
+   Disable Airplane Mode (reconnect internet). The client automatically triggers `retryPendingSync()`, authenticates anonymously with Firebase, uploads the document, and transitions the badge to green **`☁️ Synced`**.
+5. **Vavdi Rural Route & Van Waypoint**:
+   Select Ward **`GP-VAVDI` (Vavdi Gram Panchayat)**. Switch to Rural Route van **`GJ-17-GA-1003`** to watch the vehicle pass through Bhamaiya (`22.7550, 73.6300`), Vavdi (`22.7620, 73.5850`), and Tuwa (`22.7980, 73.5500`).
+6. **Collection Audit Submission**:
+   Complete the post-collection verification modal (*"Was waste collected today?"*). Verify the confirmation pill shows **`☁️ Audit Queued & Synced to Cloud`** and is stored with sync status.
 
 ---
 
