@@ -82,5 +82,11 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isStaff() && request.auth.token.role == 'ddo';
     }
+
+    // 8. Collection Feedback: Post-collection verification audits from citizens
+    match /collectionFeedback/{feedbackId} {
+      allow read: if isStaff();
+      allow create, update: if isAuthenticated();
+    }
   }
 }

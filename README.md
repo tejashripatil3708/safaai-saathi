@@ -7,6 +7,66 @@
 
 ---
 
+## 🏗️ End-to-End System Architecture
+
+```mermaid
+flowchart TD
+    subgraph Client["Citizen Frontend (PWA & Android APK)"]
+        UI["Citizen UI (Bilingual Gu/En)"]
+        GPS["High-Precision GPS Lock (±4m)"]
+        CAM["Direct Camera Viewfinder (No Gallery)"]
+        SW["Service Worker (sw.js Offline Cache)"]
+        LocalStore["Durable Offline Queue (localStorage)"]
+    end
+
+    subgraph AuthLayer["Security & Identity Boundary"]
+        Auth["Firebase Anonymous Auth (signInAnonymously)"]
+        Rules["Firestore Security Rules (deviceId == auth.uid)"]
+    end
+
+    subgraph Cloud["Cloud Infrastructure (Firebase)"]
+        DB[("Cloud Firestore")]
+        Complaints["/complaints (Tickets)"]
+        Feedback["/collectionFeedback (Audits)"]
+        Vans["/vans (Telemetry)"]
+    end
+
+    subgraph Staff["Municipal Administration & Operations"]
+        AdminUI["Admin Web Portal (Chief Officer / DDO)"]
+        StaffApp["Ward Inspector Portal (W1-W5, Bhamaiya, Tuwa, Vavdi)"]
+        Escalation["24-48h SLA Escalation Engine"]
+    end
+
+    UI --> GPS
+    UI --> CAM
+    UI --> LocalStore
+    LocalStore -->|When Online| Auth
+    Auth --> Rules
+    Rules --> DB
+    DB --> Complaints
+    DB --> Feedback
+    DB --> Vans
+    Complaints --> StaffApp
+    Complaints --> AdminUI
+    StaffApp -->|Live Status Update| Complaints
+    Complaints -.->|onSnapshot Real-time Listener| UI
+```
+
+---
+
+## ⚖️ Hackathon Evaluation Transparency: Live Code vs Demo Simulation
+
+| Feature / Subsystem | Live Production Code | Hackathon Demo Adaptation |
+| :--- | :--- | :--- |
+| **GPS Location Capture** | Live hardware GPS (`navigator.geolocation`) with high precision. | Fallback coordinates provided if device location access is denied. |
+| **Photo Verification** | Direct HTML5 Camera viewfinder (`MediaDevices.getUserMedia`) with live canvas timestamp/GPS watermark. | Gallery upload strictly disabled; fallback mock frame if running on headless simulator. |
+| **Data Persistence & Sync** | Durable offline queue + auto-sync retry on reconnect & boot. | Connected to Cloud Firestore with Anonymous Auth (`signInAnonymously`). |
+| **Live Staff Status Updates** | Real-time Firestore `onSnapshot` listener updating citizen UI dynamically. | Inspector can test status changes (`assigned`, `resolved`) directly in app or Firestore. |
+| **Garbage Van Telemetry** | Mathematical Haversine distance, dynamic ETA calculation & 500m arrival sound siren. | Route movement simulated via timer across municipal corridors & rural waypoints. |
+| **Citizen Verification** | Strict 6-digit verification code check & mandatory phone entry. | Pre-configured hackathon demo OTP (`123456`) displayed for testing ease. |
+
+---
+
 ## 🌟 Overview & Architecture
 Safaai Saathi is a civic-tech sanitation monitoring platform built specifically for Panchmahal district, covering urban Godhra Nagarpalika wards and rural Gram Panchayats (such as Bhamaiya, Tuwa, and Vavdi). 
 

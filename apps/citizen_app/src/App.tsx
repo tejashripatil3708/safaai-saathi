@@ -73,6 +73,11 @@ export const App: React.FC = () => {
     }
   }, [theme]);
 
+  // Auto-retry pending offline tickets on app startup & restore
+  useEffect(() => {
+    StorageService.retryPendingSync();
+  }, []);
+
   // Request browser geolocation on boot
   useEffect(() => {
     if (navigator.geolocation) {
