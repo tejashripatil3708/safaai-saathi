@@ -1,4 +1,4 @@
-package gov.panchmahal.safaisaathi;
+package gov.panchmahal.safaaisaathi;
 
 import com.getcapacitor.BridgeActivity;
 
