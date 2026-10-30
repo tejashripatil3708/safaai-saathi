@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Camera, X, RefreshCw, Check, AlertCircle, ShieldAlert, Sparkles } from 'lucide-react';
+import { Camera, X, RefreshCw, Check, Sparkles, Smartphone } from 'lucide-react';
 import { translations, Language } from '../core/localization';
 import { LocationCoords } from '../services/simulationService';
 
@@ -21,6 +21,7 @@ export const CameraModal: React.FC<CameraModalProps> = ({
   const t = translations[lang];
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -35,62 +36,43 @@ export const CameraModal: React.FC<CameraModalProps> = ({
       stopCamera();
       setCapturedImage(null);
       setHasPermission(null);
+      setErrorMsg(null);
       return;
     }
 
-    // Check existing permission if available
-    if (navigator.permissions && (navigator.permissions as any).query) {
-      navigator.permissions
-        .query({ name: 'camera' as any })
-        .then(result => {
-          if (result.state === 'granted') {
-            setHasPermission(true);
-            startCamera();
-          } else {
-            setHasPermission(false);
-          }
-        })
-        .catch(() => {
-          setHasPermission(false);
-        });
-    } else {
-      setHasPermission(false);
-    }
+    // Auto-initiate camera on modal open
+    startCamera();
 
     return () => {
       stopCamera();
     };
   }, [isOpen, facingMode]);
 
-  const requestCameraPermission = async () => {
-    setCameraLoading(true);
-    setErrorMsg(null);
+  const getMediaStream = async (): Promise<MediaStream> => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('navigator.mediaDevices.getUserMedia not supported');
+    }
+
+    // 1. Try environment/user ideal constraints
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: facingMode },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
+      return await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: facingMode } },
         audio: false,
       });
-
-      streamRef.current = stream;
-      setHasPermission(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
+    } catch {
+      // 2. Try simple facingMode
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          video: { facingMode },
+          audio: false,
+        });
+      } catch {
+        // 3. Fallback to basic video without constraints
+        return await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
       }
-      setCameraLoading(false);
-    } catch (err: any) {
-      console.warn('Camera permission denied or camera unavailable:', err);
-      setCameraLoading(false);
-      setHasPermission(false);
-      setErrorMsg(
-        lang === 'gu'
-          ? 'કેમેરા પરવાનગી નકારી દેવામાં આવી છે. કૃપા કરી બ્રાઉઝર સેટિંગ્સમાંથી કેમેરા ચાલુ કરો.'
-          : 'Camera permission denied. Please enable camera access in your browser site settings.'
-      );
     }
   };
 
@@ -100,25 +82,30 @@ export const CameraModal: React.FC<CameraModalProps> = ({
     stopCamera();
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: facingMode },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-        audio: false,
-      });
-
+      const stream = await getMediaStream();
       streamRef.current = stream;
+      setHasPermission(true);
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.muted = true;
+        try {
+          await videoRef.current.play();
+        } catch {
+          // Play was prevented or user gesture needed
+        }
       }
       setCameraLoading(false);
     } catch (err: any) {
-      console.warn('Start camera failed:', err);
+      console.warn('In-app live camera stream failed; enabling native camera fallback:', err);
       setCameraLoading(false);
       setHasPermission(false);
+      setErrorMsg(
+        lang === 'gu'
+          ? 'લાઇવ કેમેરા પ્રવાહ શરૂ થયો નથી. આપના ફોનનો કેમેરો સીધો ખોલવા માટે નીચેનું બટન દબાવો.'
+          : 'Live camera stream not supported directly in WebView. Tap below to snap directly using your phone camera.'
+      );
     }
   };
 
@@ -129,80 +116,95 @@ export const CameraModal: React.FC<CameraModalProps> = ({
     }
   };
 
-  const takeSnapshot = () => {
-    const fetchGpsAndStamp = (coords: LocationCoords) => {
-      const now = new Date();
-      const timeStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+  const openNativeCamera = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
 
-      let photoDataUrl = '';
+  const handleNativeFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      if (videoRef.current && videoRef.current.videoWidth > 0) {
-        const video = videoRef.current;
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-          // Embed verified Geo-stamp watermark on the bottom
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-          ctx.fillRect(0, canvas.height - 70, canvas.width, 70);
-          ctx.fillStyle = '#FFFFFF';
-          ctx.font = 'bold 20px sans-serif';
-          ctx.fillText(`📍 GPS: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}  |  🕒 ${timeStr}`, 24, canvas.height - 38);
-          ctx.fillStyle = '#6DB36F';
-          ctx.font = '16px sans-serif';
-          ctx.fillText('✓ Direct Camera Snapshot - Panchmahal Godhra', 24, canvas.height - 14);
-
-          photoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        }
-      } else {
-        // Fallback simulated capture frame if running in a restrictive emulator
-        const canvas = document.createElement('canvas');
-        canvas.width = 640;
-        canvas.height = 480;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = '#1E2D24';
-          ctx.fillRect(0, 0, 640, 480);
-          ctx.fillStyle = '#E4F1DF';
-          ctx.font = 'bold 22px sans-serif';
-          ctx.fillText('Live In-App Verification Capture', 40, 180);
-          ctx.fillStyle = '#A0B8A6';
-          ctx.font = '16px sans-serif';
-          ctx.fillText('Public Sanitation Inspection Point - Godhra', 40, 220);
-
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-          ctx.fillRect(0, 410, 640, 70);
-          ctx.fillStyle = '#FFFFFF';
-          ctx.font = 'bold 16px sans-serif';
-          ctx.fillText(`📍 GPS: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)} | 🕒 ${timeStr}`, 20, 440);
-          ctx.fillStyle = '#6DB36F';
-          ctx.font = '13px sans-serif';
-          ctx.fillText('✓ Direct Camera Snapshot - Panchmahal Godhra', 20, 465);
-
-          photoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (result) {
+        const img = new Image();
+        img.onload = () => {
+          stampAndSave(img);
+        };
+        img.src = result;
       }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
 
-      setCapturedImage(photoDataUrl);
-      setCapturedCoords(coords);
-      setCapturedTimestamp(now.toISOString());
+  const stampAndSave = (source: HTMLVideoElement | HTMLImageElement) => {
+    const now = new Date();
+    const timeStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+
+    const applyWatermark = (coords: LocationCoords) => {
+      const canvas = document.createElement('canvas');
+      const width = 'videoWidth' in source ? source.videoWidth : source.naturalWidth;
+      const height = 'videoHeight' in source ? source.videoHeight : source.naturalHeight;
+      canvas.width = width > 0 ? width : 1280;
+      canvas.height = height > 0 ? height : 720;
+      const ctx = canvas.getContext('2d');
+
+      if (ctx) {
+        ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+
+        // Watermark band
+        const barHeight = Math.max(70, Math.floor(canvas.height * 0.11));
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
+        ctx.fillRect(0, canvas.height - barHeight, canvas.width, barHeight);
+
+        // Watermark text
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = `bold ${Math.max(16, Math.floor(barHeight * 0.32))}px sans-serif`;
+        ctx.fillText(
+          `📍 GPS: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}  |  🕒 ${timeStr}`,
+          24,
+          canvas.height - (barHeight * 0.52)
+        );
+
+        ctx.fillStyle = '#6DB36F';
+        ctx.font = `${Math.max(13, Math.floor(barHeight * 0.24))}px sans-serif`;
+        ctx.fillText(
+          '✓ Direct Camera Snapshot - Panchmahal Godhra',
+          24,
+          canvas.height - (barHeight * 0.18)
+        );
+
+        const photoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        setCapturedImage(photoDataUrl);
+        setCapturedCoords(coords);
+        setCapturedTimestamp(now.toISOString());
+      }
     };
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         pos => {
-          fetchGpsAndStamp({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          applyWatermark({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         },
         _err => {
-          fetchGpsAndStamp(initialCoords || { lat: 22.7758, lng: 73.6149 });
+          applyWatermark(initialCoords || { lat: 22.7758, lng: 73.6149 });
         },
         { enableHighAccuracy: true, timeout: 5000 }
       );
     } else {
-      fetchGpsAndStamp(initialCoords || { lat: 22.7758, lng: 73.6149 });
+      applyWatermark(initialCoords || { lat: 22.7758, lng: 73.6149 });
+    }
+  };
+
+  const takeLiveSnapshot = () => {
+    if (videoRef.current && videoRef.current.videoWidth > 0) {
+      stampAndSave(videoRef.current);
+    } else {
+      openNativeCamera();
     }
   };
 
@@ -210,6 +212,7 @@ export const CameraModal: React.FC<CameraModalProps> = ({
     setCapturedImage(null);
     setCapturedCoords(null);
     setCapturedTimestamp(null);
+    startCamera();
   };
 
   const handleConfirm = () => {
@@ -223,6 +226,16 @@ export const CameraModal: React.FC<CameraModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-between overflow-hidden">
+      {/* Hidden native camera capture input (100% Android hardware support) */}
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        ref={fileInputRef}
+        className="hidden"
+        onChange={handleNativeFileChange}
+      />
+
       {/* Top Glass Control Bar */}
       <div className="w-full max-w-md px-5 pt-8 pb-3 flex items-center justify-between text-white z-20">
         <button
@@ -233,8 +246,9 @@ export const CameraModal: React.FC<CameraModalProps> = ({
           <X className="w-6 h-6" />
         </button>
 
-        <span className="text-xs font-semibold uppercase tracking-wider bg-black/60 px-3 py-1 rounded-full text-[#6DB36F] border border-[#6DB36F]/40">
-          {t.cameraOnlyTitle}
+        <span className="text-xs font-semibold uppercase tracking-wider bg-black/60 px-3 py-1 rounded-full text-[#6DB36F] border border-[#6DB36F]/40 flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>{t.cameraOnlyTitle}</span>
         </span>
 
         <button
@@ -249,9 +263,9 @@ export const CameraModal: React.FC<CameraModalProps> = ({
       {/* Main Viewfinder OR Permission Request Dialog */}
       <div className="relative w-full max-w-md flex-1 flex items-center justify-center px-6">
         {hasPermission === false && !capturedImage ? (
-          // Explicit Camera Permission Request Card
+          // Camera Fallback & Native Camera Trigger Card
           <div className="w-full bg-[#16221B] rounded-[28px] p-6 text-center border border-[#6DB36F]/40 shadow-2xl flex flex-col items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-[#1B7A3F]/30 text-[#6DB36F] flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-[#1B7A3F]/30 text-[#6DB36F] flex items-center justify-center animate-pulse">
               <Camera className="w-8 h-8" />
             </div>
             <div>
@@ -264,31 +278,41 @@ export const CameraModal: React.FC<CameraModalProps> = ({
             </div>
 
             {errorMsg && (
-              <p className="text-xs text-[#FF9B91] bg-black/40 p-2.5 rounded-xl border border-[#B3261E]/40">
+              <p className="text-xs text-[#E4F1DF] bg-[#1F3A2A] p-2.5 rounded-xl border border-[#6DB36F]/30">
                 {errorMsg}
               </p>
             )}
 
-            <button
-              onClick={requestCameraPermission}
-              disabled={cameraLoading}
-              className="w-full h-13 rounded-full bg-[#6DB36F] hover:bg-[#5FA361] text-[#111A14] font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition shadow-lg"
-            >
-              {cameraLoading ? (
-                <RefreshCw className="w-5 h-5 animate-spin text-[#111A14]" />
-              ) : (
-                <>
-                  <Camera className="w-4 h-4" />
-                  <span>{t.grantPermission}</span>
-                </>
-              )}
-            </button>
+            <div className="w-full flex flex-col gap-2 mt-2">
+              <button
+                onClick={openNativeCamera}
+                className="w-full h-14 rounded-full bg-[#6DB36F] hover:bg-[#5FA361] text-[#111A14] font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition shadow-lg"
+              >
+                <Smartphone className="w-5 h-5" />
+                <span>{lang === 'gu' ? 'ફોનનો કેમેરો ખોલો' : '📸 Open Phone Camera'}</span>
+              </button>
+
+              <button
+                onClick={startCamera}
+                disabled={cameraLoading}
+                className="w-full h-11 rounded-full bg-white/10 hover:bg-white/15 text-white font-medium text-xs flex items-center justify-center gap-2 active:scale-95 transition"
+              >
+                {cameraLoading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin text-[#6DB36F]" />
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4" />
+                    <span>{lang === 'gu' ? 'ફરી પ્રયાસ કરો' : 'Retry Live Viewfinder'}</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         ) : capturedImage ? (
           // Captured Preview
           <div className="relative w-full aspect-[4/3] rounded-[24px] overflow-hidden border-2 border-white/20 shadow-2xl bg-neutral-900">
             <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" />
-            <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-xs text-white flex items-center gap-1.5">
+            <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-xs text-white flex items-center gap-1.5 border border-[#6DB36F]/40">
               <Check className="w-3.5 h-3.5 text-[#6DB36F]" />
               <span>{t.verified}</span>
             </div>
@@ -296,7 +320,13 @@ export const CameraModal: React.FC<CameraModalProps> = ({
         ) : (
           // Live Video Stream with Corner Brackets
           <div className="relative w-full aspect-[4/3] rounded-[24px] overflow-hidden bg-neutral-900 flex items-center justify-center">
-            <video ref={videoRef} playsInline muted className="w-full h-full object-cover" />
+            <video
+              ref={videoRef}
+              playsInline
+              muted
+              autoPlay
+              className="w-full h-full object-cover"
+            />
 
             {/* Corner Brackets Overlay */}
             <div className="absolute inset-4 pointer-events-none">
@@ -347,13 +377,24 @@ export const CameraModal: React.FC<CameraModalProps> = ({
             </button>
           </div>
         ) : hasPermission ? (
-          <button
-            onClick={takeSnapshot}
-            className="w-full h-14 rounded-full bg-white text-[#111A14] font-semibold text-lg flex items-center justify-center gap-2 active:scale-95 transition shadow-2xl"
-          >
-            <span>{t.takePhoto}</span>
-            <Camera className="w-5 h-5 text-[#111A14]" />
-          </button>
+          <div className="w-full flex flex-col gap-2.5">
+            <button
+              onClick={takeLiveSnapshot}
+              className="w-full h-14 rounded-full bg-white text-[#111A14] font-semibold text-lg flex items-center justify-center gap-2 active:scale-95 transition shadow-2xl"
+            >
+              <span>{t.takePhoto}</span>
+              <Camera className="w-5 h-5 text-[#111A14]" />
+            </button>
+
+            {/* Secondary Option: Launch Native Camera */}
+            <button
+              onClick={openNativeCamera}
+              className="text-xs text-white/70 hover:text-white flex items-center justify-center gap-1.5 py-1"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>{lang === 'gu' ? 'ફોન કેમેરા એપ્લિકેશન વાપરો' : 'Switch to Phone Camera App'}</span>
+            </button>
+          </div>
         ) : null}
       </div>
     </div>
