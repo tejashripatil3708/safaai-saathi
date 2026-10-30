@@ -102,9 +102,9 @@ export class StorageService {
     const complaints = this.getComplaints();
     const existingIndex = complaints.findIndex(c => c.id === complaint.id);
     
-    // Tag sync status
+    // Always default to 'pending_sync' until cloud confirmed
     if (!complaint.syncStatus) {
-      complaint.syncStatus = navigator.onLine ? 'synced' : 'pending_sync';
+      complaint.syncStatus = 'pending_sync';
     }
 
     if (existingIndex >= 0) {
@@ -119,6 +119,8 @@ export class StorageService {
       .then(res => {
         if (res.success) {
           StorageService.updateComplaintSyncStatus(complaint.id, 'synced');
+        } else {
+          StorageService.updateComplaintSyncStatus(complaint.id, 'pending_sync');
         }
       })
       .catch(() => {
@@ -163,6 +165,7 @@ export class StorageService {
       target.resolvedAt = new Date().toISOString();
       target.resolvedNote = resolvedNote;
       localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
+      firebaseService.syncComplaintToCloud(target).catch(() => {});
     }
   }
 
@@ -186,6 +189,7 @@ export class StorageService {
       target.workerName = workerName || 'Ramesh Parmar (Ward Sanitation Worker)';
       target.autoResolveDeadline = new Date(now.getTime() + 24 * 3600 * 1000).toISOString();
       localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
+      firebaseService.syncComplaintToCloud(target).catch(() => {});
     }
   }
 
@@ -220,6 +224,7 @@ export class StorageService {
         target.note = `Disputed by citizen: ${reason || 'Still unclean'}`;
       }
       localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
+      firebaseService.syncComplaintToCloud(target).catch(() => {});
     }
   }
 
@@ -241,6 +246,7 @@ export class StorageService {
       target.reopenReason = reason || 'Reopened with fresh photo proof';
       target.note = `Reopened on ${now}: ${reason || 'Issue persisted'}`;
       localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
+      firebaseService.syncComplaintToCloud(target).catch(() => {});
     }
   }
 
@@ -253,6 +259,7 @@ export class StorageService {
         target.escalationLevel = escalationLevel;
       }
       localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
+      firebaseService.syncComplaintToCloud(target).catch(() => {});
     }
   }
 

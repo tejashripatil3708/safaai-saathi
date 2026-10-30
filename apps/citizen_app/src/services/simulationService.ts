@@ -104,11 +104,11 @@ const SOUTH_WAYPOINTS: LocationCoords[] = [
 const RURAL_WAYPOINTS: LocationCoords[] = [
   { lat: 22.7550, lng: 73.6300 }, // Bhamaiya Center
   { lat: 22.7580, lng: 73.6250 },
-  { lat: 22.7650, lng: 73.6100 },
-  { lat: 22.7850, lng: 73.5700 },
-  { lat: 22.7980, lng: 73.5500 }, // Tuwa Center
+  { lat: 22.7620, lng: 73.5850 }, // Vavdi Center & Highway Cluster
+  { lat: 22.7750, lng: 73.5750 },
+  { lat: 22.7980, lng: 73.5500 }, // Tuwa Center & Hot Springs
   { lat: 22.7800, lng: 73.5800 },
-  { lat: 22.7600, lng: 73.6200 },
+  { lat: 22.7650, lng: 73.6000 },
 ];
 
 export class VanSimulationEngine {

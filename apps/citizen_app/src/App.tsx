@@ -230,7 +230,10 @@ export const App: React.FC = () => {
             lang={lang}
             onOpenReport={() => setIsReportOpen(true)}
             onComplaintResolved={handleComplaintResolved}
-            onComplaintUpdated={() => setComplaints(StorageService.getComplaints())}
+            onComplaintUpdated={(updated) => {
+              StorageService.saveComplaint(updated);
+              setComplaints(StorageService.getComplaints());
+            }}
           />
         )}
 

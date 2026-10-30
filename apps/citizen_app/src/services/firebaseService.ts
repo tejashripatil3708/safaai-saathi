@@ -30,6 +30,7 @@ class FirebaseService {
   private db: Firestore | null = null;
   private auth: Auth | null = null;
   private currentUser: User | null = null;
+  private authInitPromise: Promise<string | null> | null = null;
   private isConfigured: boolean = false;
 
   constructor() {
@@ -44,13 +45,15 @@ class FirebaseService {
       this.isConfigured = true;
 
       // Authenticate citizen anonymously to satisfy Firestore security rules (request.auth.uid)
-      signInAnonymously(this.auth)
+      this.authInitPromise = signInAnonymously(this.auth)
         .then((cred) => {
           this.currentUser = cred.user;
           console.log(`🔐 Safaai Saathi Anonymous Auth Active (UID: ${cred.user.uid.slice(0, 8)}...)`);
+          return cred.user.uid;
         })
         .catch((authErr) => {
           console.warn('Anonymous auth fallback in offline mode:', authErr?.message || authErr);
+          return null;
         });
 
       onAuthStateChanged(this.auth, (user) => {
@@ -62,6 +65,30 @@ class FirebaseService {
       console.warn('Firebase initialization in offline/fallback mode:', err);
       this.isConfigured = false;
     }
+  }
+
+  /**
+   * Explicitly ensures the citizen has an active authenticated session before writes.
+   * Prevents race conditions where a fast ticket submission occurs before auth completes.
+   */
+  public async ensureAuth(): Promise<string | null> {
+    if (this.currentUser?.uid) {
+      return this.currentUser.uid;
+    }
+    if (this.authInitPromise) {
+      const uid = await this.authInitPromise;
+      if (uid) return uid;
+    }
+    if (this.auth) {
+      try {
+        const cred = await signInAnonymously(this.auth);
+        this.currentUser = cred.user;
+        return cred.user.uid;
+      } catch {
+        return null;
+      }
+    }
+    return null;
   }
 
   public getUid(): string | null {
@@ -78,8 +105,8 @@ class FirebaseService {
     }
 
     try {
-      // Ensure complaint deviceId matches authenticated auth.uid per firestore.rules line 62
-      const authUid = this.currentUser?.uid || complaint.deviceId;
+      // Await verified authentication so deviceId == request.auth.uid passes firestore.rules
+      const authUid = await this.ensureAuth() || complaint.deviceId;
       const docRef = doc(this.db, 'complaints', complaint.id);
       
       const firestorePayload = {
