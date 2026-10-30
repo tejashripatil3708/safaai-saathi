@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { translations, Language } from '../core/localization';
 import { StorageService } from '../services/storageService';
+import { GeoService } from '../services/simulationService';
 import { Sparkles, MapPin, Camera, Clock, ArrowRight, ArrowLeft, CheckCircle2, Shield, Navigation, Globe, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -70,11 +71,19 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   const handleGpsDetect = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        _pos => {
+        async pos => {
+          const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          const realAddr = await GeoService.reverseGeocode(coords);
+          const matchedWard = GeoService.findWardByLocation(coords);
+          const finalAddr = realAddr || (matchedWard ? `${matchedWard.name.split('-')[1]?.trim() || matchedWard.name}, Godhra` : 'Polan Bazar / Station Road, Godhra');
+          setAddressInput(finalAddr);
+          StorageService.setCitizenAddress(finalAddr, matchedWard?.id);
+        },
+        _err => {
           setAddressInput('Polan Bazar / Station Road, Godhra');
           StorageService.setCitizenAddress('Polan Bazar / Station Road, Godhra');
         },
-        _err => {}
+        { enableHighAccuracy: true, timeout: 8000 }
       );
     }
   };

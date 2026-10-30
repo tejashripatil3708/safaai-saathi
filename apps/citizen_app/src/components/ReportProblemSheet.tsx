@@ -36,6 +36,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
   const [customTitle, setCustomTitle] = useState('');
   const [description, setDescription] = useState('');
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [realAddress, setRealAddress] = useState<string | null>(null);
 
   // High-accuracy GPS auto-detection state
   const [capturedLocation, setCapturedLocation] = useState<LocationCoords | null>(userLocation || null);
@@ -85,6 +86,11 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
           setDetectedWard(matched);
           setGpsAccuracy(Math.round(position.coords.accuracy || 4));
           setGpsStatus('acquired');
+
+          // Asynchronously reverse-geocode the citizen's real-world street/city location
+          GeoService.reverseGeocode(coords).then(addr => {
+            if (addr) setRealAddress(addr);
+          });
         },
         err => {
           console.warn('GPS hardware auto-detect notice:', err);
@@ -114,6 +120,10 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
     setDetectedWard(matched);
     setGpsStatus('acquired');
     setError(null);
+
+    GeoService.reverseGeocode(location).then(addr => {
+      if (addr) setRealAddress(addr);
+    });
   };
 
   const handleInitialSubmit = () => {
@@ -151,9 +161,10 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
 
     // Auto-detected coordinates formatted address
     const coordsStr = `${capturedLocation.lat.toFixed(5)}° N, ${capturedLocation.lng.toFixed(5)}° E`;
+    const locationName = realAddress || resolvedWard.name;
     const formattedAddress = description.trim()
-      ? `${resolvedWard.name} (${description.trim()}) • GPS: ${coordsStr}`
-      : `${resolvedWard.name} • GPS: ${coordsStr}`;
+      ? `${locationName} (${description.trim()}) • GPS: ${coordsStr}`
+      : `${locationName} • GPS: ${coordsStr}`;
 
     const newComplaint: Complaint = {
       id: 'cmp_' + Date.now().toString(36),
@@ -309,9 +320,15 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
                           <span>{lang === 'gu' ? 'લૉક' : 'LOCKED'}</span>
                         </span>
                       </div>
-                      <p className="text-[11px] font-bold text-[#1B7A3F] mt-0.5">
-                        {lang === 'gu' ? detectedWard.nameGu : detectedWard.name} ({detectedWard.code})
-                      </p>
+                      {realAddress ? (
+                        <p className="text-[11px] font-bold text-[#1B7A3F] mt-0.5 truncate max-w-[220px]" title={realAddress}>
+                          📍 {realAddress}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] font-bold text-[#1B7A3F] mt-0.5">
+                          {lang === 'gu' ? detectedWard.nameGu : detectedWard.name} ({detectedWard.code})
+                        </p>
+                      )}
                     </div>
                   </div>
 

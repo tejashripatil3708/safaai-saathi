@@ -54,6 +54,71 @@ export class GeoService {
   }
 
   /**
+   * Reverse geocodes coordinates to a real-world human-readable street/locality address.
+   * Uses OpenStreetMap Nominatim with fast fallback to BigDataCloud reverse geocoder.
+   */
+  static async reverseGeocode(location: LocationCoords): Promise<string | null> {
+    const lat = location.lat;
+    const lng = location.lng;
+
+    // 1. Try OpenStreetMap Nominatim
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4500);
+      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'SafaaiSaathiPWA/1.0' },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        const addr = data.address || {};
+        const road = addr.road || addr.pedestrian || addr.suburb || addr.neighbourhood;
+        const area = addr.suburb || addr.neighbourhood || addr.residential;
+        const city = addr.city || addr.town || addr.village || addr.county;
+        const state = addr.state;
+
+        const parts = [road, area, city, state].filter(Boolean);
+        const cleanParts = parts.filter((item, pos, ary) => !pos || item !== ary[pos - 1]);
+        if (cleanParts.length >= 2) {
+          return cleanParts.join(', ');
+        }
+        if (data.display_name) {
+          const split = data.display_name.split(',');
+          return split.slice(0, 3).map((s: string) => s.trim()).join(', ');
+        }
+      }
+    } catch {
+      // Nominatim failed or timed out; try fallback
+    }
+
+    // 2. Fallback to BigDataCloud client-side reverse geocoder
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`;
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        const parts = [
+          data.locality || data.localityInfo?.administrative?.[3]?.name,
+          data.city || data.localityInfo?.administrative?.[2]?.name,
+          data.principalSubdivision
+        ].filter(Boolean);
+        if (parts.length > 0) {
+          return parts.join(', ');
+        }
+      }
+    } catch {
+      // Offline fallback
+    }
+
+    return null;
+  }
+
+  /**
    * Calculates ETA in minutes based on distance and average van speed (15 km/h)
    */
   static calculateEtaMinutes(distanceMeters: number, _speedKmph = CONSTANTS.AVG_VAN_SPEED_KMPH): number {

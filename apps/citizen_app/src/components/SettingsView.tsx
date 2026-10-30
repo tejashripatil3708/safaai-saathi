@@ -42,20 +42,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        pos => {
-          const matchedWard = GeoService.findWardByLocation({
+        async pos => {
+          const coords = {
             lat: pos.coords.latitude,
             lng: pos.coords.longitude,
-          });
+          };
+          const realAddr = await GeoService.reverseGeocode(coords);
+          const matchedWard = GeoService.findWardByLocation(coords);
           setGpsDetecting(false);
+
           if (matchedWard) {
             onWardChange(matchedWard.id);
-            const detectedArea = `${matchedWard.name.split('-')[1]?.trim() || matchedWard.name}, Godhra`;
-            setAddressInput(detectedArea);
-            StorageService.setCitizenAddress(detectedArea, matchedWard.id);
-            setAddressSavedMsg(true);
-            setTimeout(() => setAddressSavedMsg(false), 3000);
           }
+          const detectedArea = realAddr || (matchedWard ? `${matchedWard.name.split('-')[1]?.trim() || matchedWard.name}, Godhra` : 'Polan Bazar, Godhra');
+          setAddressInput(detectedArea);
+          StorageService.setCitizenAddress(detectedArea, matchedWard?.id);
+          setAddressSavedMsg(true);
+          setTimeout(() => setAddressSavedMsg(false), 3500);
         },
         _err => {
           setGpsDetecting(false);
@@ -65,7 +68,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               : 'GPS unavailable. Please type your street/house address manually.'
           );
         },
-        { timeout: 6000 }
+        { enableHighAccuracy: true, timeout: 8000 }
       );
     } else {
       setGpsDetecting(false);
