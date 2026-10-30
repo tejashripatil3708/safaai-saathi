@@ -166,7 +166,7 @@ export const translations = {
     exitFullscreen: 'શીટ પાછી લાવો',
   },
   en: {
-    appName: 'Safai Saathi',
+    appName: 'Safaai Saathi',
     subTitle: 'Panchmahal Godhra - Citizen Sanitation Monitor',
     liveVanTracking: 'Live Garbage Van Tracking',
     ward: 'Ward',
@@ -194,7 +194,7 @@ export const translations = {
     },
     intro: {
       badge: 'Panchmahal DDO Initiative',
-      welcomeTitle: 'Welcome to Safai Saathi 🌱',
+      welcomeTitle: 'Welcome to Safaai Saathi 🌱',
       welcomeSubtitle: 'Transparent waste collection & sanitation monitoring for Godhra Nagarpalika and Panchmahal Panchayats.',
       slide1Title: 'Live GPS Van Telemetry & 500m Arrival Siren',
       slide1Desc: 'Watch collection vans move live along municipal routes and receive instant notifications when the van enters your ward.',

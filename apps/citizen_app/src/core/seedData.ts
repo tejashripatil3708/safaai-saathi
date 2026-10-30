@@ -257,7 +257,7 @@ export const SEED_TIPS: SanitationTip[] = [
     titleGu: 'વાન નજીક આવે એટલે તરત કચરો તૈયાર રાખો',
     titleEn: 'Keep Bins Ready When the Collection Van Enters Your Ward',
     descGu: 'તમારા મોબાઈલમાં વાન તમારા વિસ્તારથી ૫૦૦ મીટર દૂર હોય ત્યારે તરત એલર્ટ આવશે. શેરીના ખૂણે કચરો ફેંકવાનું ટાળો.',
-    descEn: 'Safai Saathi notifies you as soon as the van is within 500m of your street. Avoid dumping at road corners.',
+    descEn: 'Safaai Saathi notifies you as soon as the van is within 500m of your street. Avoid dumping at road corners.',
     category: 'schedule',
   },
   {

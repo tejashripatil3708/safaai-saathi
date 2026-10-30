@@ -1,4 +1,4 @@
-name: Safai Saathi CI, Web & Android APK Deployment
+name: Safaai Saathi CI, Web & Android APK Deployment
 
 on:
   push:
@@ -54,14 +54,14 @@ jobs:
         run: |
           chmod +x apps/citizen_app/android/gradlew
 
-      - name: Build Android APK (Safai-Saathi.apk)
+      - name: Build Android APK (Safaai-Saathi.apk)
         run: |
           cd apps/citizen_app/android
           ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Copy APK to Web Dist for 1-Click Direct Download
         run: |
-          cp apps/citizen_app/android/app/build/outputs/apk/debug/Safai-Saathi.apk apps/citizen_app/dist/Safai-Saathi.apk
+          cp apps/citizen_app/android/app/build/outputs/apk/debug/Safaai-Saathi.apk apps/citizen_app/dist/Safaai-Saathi.apk
 
       - name: Deploy to GitHub Pages (gh-pages)
         uses: JamesIves/github-pages-deploy-action@v4
@@ -73,8 +73,8 @@ jobs:
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: safai-saathi-android-apk
-          path: apps/citizen_app/android/app/build/outputs/apk/debug/Safai-Saathi.apk
+          name: safaai-saathi-android-apk
+          path: apps/citizen_app/android/app/build/outputs/apk/debug/Safaai-Saathi.apk
           if-no-files-found: error
 
       - name: Create or Update GitHub Release with Direct APK
@@ -82,8 +82,8 @@ jobs:
         if: github.ref == 'refs/heads/main'
         with:
           tag_name: v1.0.0
-          name: "Safai Saathi Android v1.0.0"
-          body: "Official Android APK build for Safai Saathi Citizen Sanitation Monitoring System (Panchmahal Godhra). Direct installable .apk."
-          files: apps/citizen_app/android/app/build/outputs/apk/debug/Safai-Saathi.apk
+          name: "Safaai Saathi Android v1.0.0"
+          body: "Official Android APK build for Safaai Saathi Citizen Sanitation Monitoring System (Panchmahal Godhra). Direct installable .apk."
+          files: apps/citizen_app/android/app/build/outputs/apk/debug/Safaai-Saathi.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

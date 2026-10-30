@@ -264,12 +264,12 @@ export const MapShell: React.FC<MapShellProps> = ({
           <div className="flex items-center gap-3">
             <img
               src="./logo.png"
-              alt="Safai Saathi"
+              alt="Safaai Saathi"
               className="w-11 h-11 rounded-2xl object-cover shadow-sm border border-[#DCE5D9] dark:border-[#2A3B31] bg-white shrink-0"
             />
             <div>
               <h1 className="text-sm font-bold text-[#14201A] dark:text-[#EAF2E6] leading-tight">
-                {lang === 'gu' ? 'સ્વચ્છતા સાથી' : 'Safai Saathi'}
+                {lang === 'gu' ? 'સ્વચ્છતા સાથી' : 'Safaai Saathi'}
               </h1>
               <p className="text-[11px] font-semibold text-[#1B7A3F] dark:text-[#6DB36F] leading-tight mt-0.5">
                 {lang === 'gu' ? 'પંચમહાલ ગોધરા' : 'Panchmahal Godhra'}

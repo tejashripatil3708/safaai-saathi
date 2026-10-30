@@ -44,7 +44,7 @@ export const MyComplaintsView: React.FC<MyComplaintsViewProps> = ({
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center my-10 bg-white dark:bg-[#16221B] rounded-[28px] border border-[#DCE5D9] dark:border-[#2A3B31] shadow-elev1">
           <img
             src="./logo.png"
-            alt="Safai Saathi"
+            alt="Safaai Saathi"
             className="w-20 h-20 rounded-3xl object-cover mb-4 shadow-sm border border-[#DCE5D9] dark:border-[#2A3B31] bg-white"
           />
           <h3 className="text-base font-bold text-[#14201A] dark:text-[#EAF2E6]">

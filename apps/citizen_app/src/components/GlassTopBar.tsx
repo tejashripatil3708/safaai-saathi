@@ -96,7 +96,7 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
           >
             <img
               src="./logo.png"
-              alt="Safai Saathi"
+              alt="Safaai Saathi"
               className="w-10 h-10 rounded-full object-cover shrink-0 shadow-sm border border-emerald-600/30 bg-white"
             />
             <div className="min-w-0 pr-1">
@@ -144,12 +144,12 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
               <div className="flex items-center gap-2.5">
                 <img
                   src="./logo.png"
-                  alt="Safai Saathi"
+                  alt="Safaai Saathi"
                   className="w-10 h-10 rounded-xl object-cover bg-white shadow-sm border border-[#DCE5D9]"
                 />
                 <div>
                   <h3 className="text-sm font-bold text-[#14201A] dark:text-[#EAF2E6]">
-                    {lang === 'gu' ? 'સફાઈ સાથી ડાઉનલોડ' : 'Download Safai Saathi'}
+                    {lang === 'gu' ? 'સફાઈ સાથી ડાઉનલોડ' : 'Download Safaai Saathi'}
                   </h3>
                   <p className="text-[10px] text-[#566259] dark:text-[#9DB0A2]">
                     Panchmahal Godhra Citizen App
@@ -184,8 +184,8 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
 
             {/* Option 2: Download Offline ZIP */}
             <a
-              href="./safai-saathi-web-app.zip"
-              download="safai-saathi-web-app.zip"
+              href="./safaai-saathi-web-app.zip"
+              download="safaai-saathi-web-app.zip"
               className="w-full p-3.5 rounded-2xl bg-[#F3F6F2] dark:bg-[#1E2E23] hover:bg-[#E9F1E6] text-[#14201A] dark:text-[#EAF2E6] flex items-center gap-3 active:scale-[0.98] transition border border-[#DCE5D9] dark:border-[#2A3B31]"
             >
               <div className="w-10 h-10 rounded-xl bg-[#E4F1DF] dark:bg-[#2A4433] text-[#1B7A3F] flex items-center justify-center shrink-0">
@@ -204,7 +204,7 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
 
             {/* Option 3: Download Android APK Build */}
             <a
-              href="https://github.com/tejashripatil3708/safai-saathi/actions"
+              href="https://github.com/tejashripatil3708/safaai-saathi/actions"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full p-3.5 rounded-2xl bg-[#E4F1DF] dark:bg-[#1A3324] hover:bg-[#d8eed2] text-[#14201A] dark:text-[#EAF2E6] flex items-center gap-3 active:scale-[0.98] transition border border-[#B5CF8A] dark:border-[#2A3B31]"
@@ -228,7 +228,7 @@ export const GlassTopBar: React.FC<GlassTopBarProps> = ({
             <div className="bg-[#E9F1E6]/60 dark:bg-[#1A281F] p-3 rounded-xl text-[11px] text-[#566259] dark:text-[#9DB0A2] leading-relaxed">
               💡 {lang === 'gu'
                 ? 'ક્રોમ બ્રાઉઝરના મેનુ (⋮) માં "Install App" અથવા "Add to Home screen" દબાવીને પણ ઇન્સ્ટોલ કરી શકાય છે.'
-                : 'You can also tap the Chrome menu (⋮) and choose "Install Safai Saathi" or "Add to Home screen".'}
+                : 'You can also tap the Chrome menu (⋮) and choose "Install Safaai Saathi" or "Add to Home screen".'}
             </div>
           </div>
         </div>

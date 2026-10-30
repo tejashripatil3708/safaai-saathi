@@ -1,14 +1,14 @@
-# Safai Saathi (સ્વચ્છતા સાથી)
+# Safaai Saathi (સ્વચ્છતા સાથી)
 ### Citizen-Centric Municipal & Rural Garbage Collection, Open Gutter & Public Sanitation Monitoring System
 **Problem Statement ID:** PS000051 | **Sector:** Smart Cities & Urban Governance  
 **Authority:** District Development Office (DDO) – Panchmahal Godhra & Godhra Nagarpalika  
-**Live PWA Web App:** [https://tejashripatil3708.github.io/safai-saathi/](https://tejashripatil3708.github.io/safai-saathi/)  
-**Direct Android APK Download:** [Safai-Saathi.apk (v1.0.0)](https://github.com/tejashripatil3708/safai-saathi/releases/download/v1.0.0/Safai-Saathi.apk)  
+**Live PWA Web App:** [https://tejashripatil3708.github.io/safaai-saathi/](https://tejashripatil3708.github.io/safaai-saathi/)  
+**Direct Android APK Download:** [Safaai-Saathi.apk (v1.0.0)](https://github.com/tejashripatil3708/safaai-saathi/releases/download/v1.0.0/Safaai-Saathi.apk)  
 
 ---
 
 ## 🌟 Overview & Architecture
-Safai Saathi is a civic-tech sanitation monitoring platform built specifically for Panchmahal district, covering urban Godhra Nagarpalika wards and rural Gram Panchayats (such as Bhamaiya, Tuwa, and Vavdi). 
+Safaai Saathi is a civic-tech sanitation monitoring platform built specifically for Panchmahal district, covering urban Godhra Nagarpalika wards and rural Gram Panchayats (such as Bhamaiya, Tuwa, and Vavdi). 
 
 The platform connects three core pillars under a unified real-time data contract:
 1. **Citizen App (PWA & Android Native APK)**: Citizen reporting with tamper-proof GPS, live garbage van tracking, dynamic ETA countdown, arrival sound alerts, and post-collection audit.
@@ -22,11 +22,11 @@ The platform connects three core pillars under a unified real-time data contract
 | Feature | Progressive Web App (PWA) | Native Android APK |
 | :--- | :--- | :--- |
 | **What is it?** | A web application running in any browser with app-like superpowers. | A native Android package (`.apk`) wrapped via Capacitor. |
-| **Installation** | Instant via browser: tap **"Install App"** / **"Add to Home Screen"**. | Download & install `Safai-Saathi.apk` on any Android device. |
+| **Installation** | Instant via browser: tap **"Install App"** / **"Add to Home Screen"**. | Download & install `Safaai-Saathi.apk` on any Android device. |
 | **App Store Needed?** | ❌ No, runs instantly on any phone (Android & iOS). | ❌ No, direct sideload / enterprise distribution. |
 | **Offline Support** | ✅ Built-in Service Worker cache (`sw.js`). | ✅ Native device sandbox. |
-| **Launcher Icon** | ✅ Official green Safai Saathi truck icon. | ✅ Adaptive multi-density launcher icon (`mdpi` to `xxxhdpi`). |
-| **Direct Access** | [Open Web App](https://tejashripatil3708.github.io/safai-saathi/) | [Download APK](https://github.com/tejashripatil3708/safai-saathi/releases/download/v1.0.0/Safai-Saathi.apk) |
+| **Launcher Icon** | ✅ Official green Safaai Saathi truck icon. | ✅ Adaptive multi-density launcher icon (`mdpi` to `xxxhdpi`). |
+| **Direct Access** | [Open Web App](https://tejashripatil3708.github.io/safaai-saathi/) | [Download APK](https://github.com/tejashripatil3708/safaai-saathi/releases/download/v1.0.0/Safaai-Saathi.apk) |
 
 ---
 
@@ -76,7 +76,7 @@ The platform connects three core pillars under a unified real-time data contract
 
 ### 10. Clean Civic UI & Bilingual Support
 - **Uncluttered Map Interface**: Removed unnecessary ward selector pills from the citizen map view for a clean, intuitive experience.
-- **Enlarged Prominent Branding**: Displays the official green Safai Saathi logo clearly in the header, modals, and navigation dock.
+- **Enlarged Prominent Branding**: Displays the official green Safaai Saathi logo clearly in the header, modals, and navigation dock.
 - **Spacious Bottom Dock**: Restored 3-tab ergonomic navigation (`Map`, `Report Issue`, `My Complaints`) with large touch targets.
 - **Instant Language Switcher**: Persistent `[ 🌐 English / ગુજરાતી ]` button in the header with full localization for Gujarati (`gu`) and English (`en`).
 
@@ -125,7 +125,7 @@ cd apps/citizen_app
 npm run build
 npx cap sync android
 ```
-Open `apps/citizen_app/android` in Android Studio (or run `./gradlew assembleDebug`) to generate the native `Safai-Saathi.apk`.
+Open `apps/citizen_app/android` in Android Studio (or run `./gradlew assembleDebug`) to generate the native `Safaai-Saathi.apk`.
 
 ---
 

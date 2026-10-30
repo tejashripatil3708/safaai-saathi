@@ -1,6 +1,6 @@
 {
-  "appId": "gov.panchmahal.safaisaathi",
-  "appName": "Safai Saathi",
+  "appId": "gov.panchmahal.safaaisaathi",
+  "appName": "Safaai Saathi",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Safai Saathi</string>
-    <string name="title_activity_main">Safai Saathi</string>
-    <string name="package_name">gov.panchmahal.safaisaathi</string>
-    <string name="custom_url_scheme">gov.panchmahal.safaisaathi</string>
+    <string name="app_name">Safaai Saathi</string>
+    <string name="title_activity_main">Safaai Saathi</string>
+    <string name="package_name">gov.panchmahal.safaaisaathi</string>
+    <string name="custom_url_scheme">gov.panchmahal.safaaisaathi</string>
 </resources>

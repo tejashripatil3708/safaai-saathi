@@ -89,7 +89,7 @@ export const WhatsAppChatSimulationModal: React.FC<WhatsAppChatSimulationModalPr
             </div>
             <div className="leading-tight">
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-sm text-white">Safai Saathi Bot</span>
+                <span className="font-bold text-sm text-white">Safaai Saathi Bot</span>
                 <span className="bg-[#25D366] text-white text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
                   ✓
                 </span>
@@ -120,7 +120,7 @@ export const WhatsAppChatSimulationModal: React.FC<WhatsAppChatSimulationModalPr
             TODAY
           </div>
 
-          {/* Incoming Message Bubble from Safai Saathi Bot */}
+          {/* Incoming Message Bubble from Safaai Saathi Bot */}
           <div className="self-start max-w-[92%] sm:max-w-[85%] bg-white dark:bg-[#202C33] rounded-2xl rounded-tl-none p-3 shadow-sm border border-[#E9EDEF] dark:border-transparent flex flex-col gap-2">
             
             {/* Header with Government Seal */}

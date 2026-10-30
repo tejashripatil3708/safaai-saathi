@@ -57,7 +57,7 @@ _Auto-escalates to Chief Officer & DDO if unresolved within 24h._
 🔍 *લાઈવ ટ્રેકિંગ / Track Status Online:*
 ${trackUrl}
 
-🤖 _Safai Saathi Automated Sanitation Bot (Godhra Municipality)_`
+🤖 _Safaai Saathi Automated Sanitation Bot (Godhra Municipality)_`
     );
   }
 
@@ -96,7 +96,7 @@ ${trackUrl}
         deliveryChannel = 'webhook';
       }
     } catch {
-      // In standalone / client mode, delivery is fulfilled by Safai Saathi Cloud Bot
+      // In standalone / client mode, delivery is fulfilled by Safaai Saathi Cloud Bot
       deliveryChannel = 'cloud_bot';
     }
 

@@ -45,7 +45,7 @@ export const ComplaintSuccessModal: React.FC<ComplaintSuccessModalProps> = ({
           <div className="relative mb-3">
             <img
               src="./logo.png"
-              alt="Safai Saathi Official Seal"
+              alt="Safaai Saathi Official Seal"
               className="w-16 h-16 rounded-2xl shadow-xl border-2 border-white/80 object-cover bg-white"
             />
             <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#1B7A3F] text-white flex items-center justify-center shadow-md border-2 border-white">

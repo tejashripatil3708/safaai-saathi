@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { translations, Language } from '../core/localization';
 import { StorageService } from '../services/storageService';
-import { Sparkles, MapPin, Camera, Clock, ArrowRight, CheckCircle2, Shield, Navigation, Globe, X } from 'lucide-react';
+import { Sparkles, MapPin, Camera, Clock, ArrowRight, ArrowLeft, CheckCircle2, Shield, Navigation, Globe, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface OnboardingModalProps {
@@ -20,6 +20,15 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   const t = translations[lang];
   const [currentStep, setCurrentStep] = useState(0);
   const [addressInput, setAddressInput] = useState(StorageService.getCitizenAddress());
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+
+  // Always reset to the very first slide whenever the modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentStep(0);
+      setAddressInput(StorageService.getCitizenAddress());
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -30,6 +39,12 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       setCurrentStep(prev => prev + 1);
     } else {
       handleComplete();
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
     }
   };
 
@@ -64,14 +79,36 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     }
   };
 
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+    if (diff > 50) {
+      // Swiped left -> next
+      handleNext();
+    } else if (diff < -50) {
+      // Swiped right -> prev
+      handlePrev();
+    }
+    setTouchStartX(null);
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-      <div className="w-full max-w-md bg-white dark:bg-[#16221B] rounded-[32px] overflow-hidden shadow-2xl border border-[#DCE5D9] dark:border-[#2A3B31] flex flex-col justify-between min-h-[520px]">
+      <div 
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        className="w-full max-w-md bg-white dark:bg-[#16221B] rounded-[32px] overflow-hidden shadow-2xl border border-[#DCE5D9] dark:border-[#2A3B31] flex flex-col justify-between min-h-[520px]"
+      >
         {/* Top Header & Language Toggle & Skip */}
         <div className="p-6 pb-0 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-[#E4F1DF] dark:bg-[#1F3A2A] text-[#1B7A3F] dark:text-[#6DB36F]">
-              {t.intro.badge}
+              {t.intro.badge} ({currentStep + 1}/{totalSteps})
             </span>
             {/* Gujarati <-> English Language Switcher */}
             <button
@@ -92,13 +129,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           </button>
         </div>
 
-        {/* Carousel Content Body */}
-        <div className="px-6 py-4 flex-1 flex flex-col items-center justify-center text-center">
+        {/* Carousel Content Body - Scrollable */}
+        <div className="px-6 py-4 flex-1 flex flex-col items-center justify-center text-center overflow-y-auto max-h-[380px]">
           {currentStep === 0 && (
             <div className="flex flex-col items-center gap-4 animate-in zoom-in-95">
               <img
                 src="./logo.png"
-                alt="Safai Saathi"
+                alt="Safaai Saathi"
                 className="w-24 h-24 rounded-3xl shadow-lg border-2 border-white object-cover bg-white"
               />
               <h2 className="text-2xl font-bold text-[#14201A] dark:text-[#EAF2E6] leading-tight">
@@ -175,29 +212,48 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           )}
         </div>
 
-        {/* Stepper Dots & Next Button */}
+        {/* Stepper Dots & Navigation Buttons */}
         <div className="p-6 pt-0 flex flex-col gap-4">
-          {/* Stepper Dots */}
+          {/* Clickable Stepper Dots */}
           <div className="flex items-center justify-center gap-2">
             {Array.from({ length: totalSteps }).map((_, idx) => (
-              <span
+              <button
                 key={idx}
-                className={`h-2 rounded-full transition-all duration-300 ${
+                type="button"
+                onClick={() => setCurrentStep(idx)}
+                className={`h-2.5 rounded-full transition-all duration-300 focus:outline-none ${
                   currentStep === idx
-                    ? 'w-6 bg-[#1B7A3F] dark:bg-[#6DB36F]'
-                    : 'w-2 bg-[#DCE5D9] dark:bg-[#2A3B31]'
+                    ? 'w-7 bg-[#1B7A3F] dark:bg-[#6DB36F]'
+                    : 'w-2.5 bg-[#DCE5D9] dark:bg-[#2A3B31] hover:bg-[#74897A]'
                 }`}
+                title={`Go to step ${idx + 1}`}
+                aria-label={`Go to step ${idx + 1}`}
               />
             ))}
           </div>
 
-          <button
-            onClick={handleNext}
-            className="w-full h-14 rounded-full bg-[#111A14] dark:bg-[#F2F7EE] text-white dark:text-[#111A14] font-bold text-base flex items-center justify-center gap-2 shadow-xl active:scale-95 transition"
-          >
-            <span>{currentStep === totalSteps - 1 ? t.intro.startNow : t.intro.next}</span>
-            <ArrowRight className="w-5 h-5" />
-          </button>
+          {/* Buttons: Back + Next */}
+          <div className="flex items-center gap-3">
+            {currentStep > 0 && (
+              <button
+                type="button"
+                onClick={handlePrev}
+                className="h-14 px-5 rounded-full bg-[#F3F6F2] dark:bg-[#1E2D24] text-[#14201A] dark:text-[#EAF2E6] font-bold text-sm flex items-center justify-center gap-1.5 border border-[#DCE5D9] dark:border-[#2A3B31] active:scale-95 transition hover:bg-[#E4F1DF] dark:hover:bg-[#2A3B31]"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>{lang === 'gu' ? 'પાછળ' : 'Back'}</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleNext}
+              className="flex-1 h-14 rounded-full bg-[#111A14] dark:bg-[#F2F7EE] text-white dark:text-[#111A14] font-bold text-base flex items-center justify-center gap-2 shadow-xl active:scale-95 transition hover:opacity-90"
+            >
+              <span>{currentStep === totalSteps - 1 ? t.intro.startNow : t.intro.next}</span>
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

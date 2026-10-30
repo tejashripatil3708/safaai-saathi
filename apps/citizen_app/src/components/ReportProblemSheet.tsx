@@ -203,7 +203,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
             <div className="flex items-center gap-2.5">
               <img
                 src="./logo.png"
-                alt="Safai Saathi Logo"
+                alt="Safaai Saathi Logo"
                 className="w-11 h-11 rounded-2xl object-cover shadow-sm bg-white border border-[#DCE5D9]"
               />
               <div>

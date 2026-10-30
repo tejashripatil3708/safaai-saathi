@@ -86,7 +86,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
         <img
           src="./logo.png"
-          alt="Safai Saathi"
+          alt="Safaai Saathi"
           className="w-12 h-12 rounded-2xl shadow-sm border border-[#DCE5D9] dark:border-[#2A3B31] object-cover bg-white"
         />
       </div>
