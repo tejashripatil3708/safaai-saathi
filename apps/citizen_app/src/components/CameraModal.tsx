@@ -153,7 +153,7 @@ export const CameraModal: React.FC<CameraModalProps> = ({
           ctx.fillText(`📍 GPS: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}  |  🕒 ${timeStr}`, 24, canvas.height - 38);
           ctx.fillStyle = '#6DB36F';
           ctx.font = '16px sans-serif';
-          ctx.fillText('✓ Panchmahal Godhra Official Sanitation Geo-Verified', 24, canvas.height - 14);
+          ctx.fillText('✓ Direct Camera Snapshot - Panchmahal Godhra', 24, canvas.height - 14);
 
           photoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
         }
@@ -180,7 +180,7 @@ export const CameraModal: React.FC<CameraModalProps> = ({
           ctx.fillText(`📍 GPS: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)} | 🕒 ${timeStr}`, 20, 440);
           ctx.fillStyle = '#6DB36F';
           ctx.font = '13px sans-serif';
-          ctx.fillText('✓ Hardware Verified Live Snapshot - Panchmahal Godhra', 20, 465);
+          ctx.fillText('✓ Direct Camera Snapshot - Panchmahal Godhra', 20, 465);
 
           photoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
         }

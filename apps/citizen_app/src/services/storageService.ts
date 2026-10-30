@@ -1,3 +1,4 @@
+import { firebaseService } from './firebaseService';
 import { Complaint, CitizenCollectionFeedback, AppTheme } from '../types';
 
 const STORAGE_KEYS = {
@@ -106,6 +107,9 @@ export class StorageService {
       complaints.unshift(complaint);
     }
     localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
+
+    // Asynchronously synchronize with Firestore for Municipal Admin Web Portal
+    firebaseService.syncComplaintToCloud(complaint).catch(() => {});
 
     window.dispatchEvent(new CustomEvent('safai_sathi_new_complaint', { detail: complaint }));
   }

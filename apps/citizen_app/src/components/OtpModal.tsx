@@ -22,7 +22,6 @@ export const OtpModal: React.FC<OtpModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Always reset fields when modal opens - strictly no saving phone numbers!
   useEffect(() => {
     if (isOpen) {
       setPhoneNumber('');
@@ -53,7 +52,7 @@ export const OtpModal: React.FC<OtpModalProps> = ({
     setTimeout(() => {
       setLoading(false);
       setOtpSent(true);
-      setOtpCode('123456');
+      setOtpCode(''); // Let user type 123456
     }, 400);
   };
 
@@ -68,6 +67,16 @@ export const OtpModal: React.FC<OtpModalProps> = ({
       return;
     }
 
+    // Strict validation: must match official demo OTP '123456'
+    if (cleanOtp !== '123456') {
+      setError(
+        lang === 'gu'
+          ? 'અમાન્ય OTP કોડ! કૃપા કરી સાચો કોડ (123456) દાખલ કરો.'
+          : 'Invalid OTP code! Please enter the correct code (123456).'
+      );
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -76,7 +85,6 @@ export const OtpModal: React.FC<OtpModalProps> = ({
       const cleanPhone = phoneNumber.trim().replace(/\D/g, '');
       const formattedPhone = cleanPhone.length === 10 ? `+91 ${cleanPhone}` : `+${cleanPhone}`;
       
-      // Pass directly to caller — strictly never saved in localStorage
       onVerified(formattedPhone);
       onClose();
     }, 300);
@@ -136,12 +144,12 @@ export const OtpModal: React.FC<OtpModalProps> = ({
               <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
               <div className="leading-snug">
                 <span className="font-bold block">
-                  {lang === 'gu' ? 'ગોપનીયતા સુરક્ષા:' : 'Privacy Protection:'}
+                  {lang === 'gu' ? 'સત્તાવાર સંચાર હેતુ:' : 'Resolution Communication:'}
                 </span>
                 <span className="text-[11px] text-[#14201A]/80 mt-0.5 block">
                   {lang === 'gu'
-                    ? 'તમારો નંબર સેવ કરવામાં આવતો નથી. સત્તાવાર ફરિયાદ નોંધણી માટે OTP ચકાસણી જરૂરી છે.'
-                    : 'Your number is never saved locally. OTP verification ensures genuine citizen grievances.'}
+                    ? 'તમારો નંબર સુરક્ષિત રીતે ફરિયાદ સાથે જોડવામાં આવશે જેથી નગરપાલિકા અધિકારીઓ ફરિયાદ નિવારણ માટે સંપર્ક કરી શકે.'
+                    : 'Your number is securely attached to this ticket so municipal officers can reach you regarding resolution updates.'}
                 </span>
               </div>
             </div>
@@ -189,7 +197,7 @@ export const OtpModal: React.FC<OtpModalProps> = ({
                 className="w-full h-14 text-center tracking-[0.5em] text-2xl font-bold rounded-[20px] bg-white border-2 border-[#1B7A3F] focus:outline-none text-[#14201A]"
               />
               <div className="mt-2 text-center text-xs text-[#566259]">
-                {lang === 'gu' ? 'વેરિફિકેશન OTP:' : 'Verification OTP:'}{' '}
+                {lang === 'gu' ? 'ચકાસણી OTP:' : 'Verification OTP:'}{' '}
                 <strong className="text-[#1B7A3F] font-mono text-sm">123456</strong>
               </div>
             </div>

@@ -319,7 +319,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
                   <div className="shrink-0 text-right">
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#1B7A3F] bg-white px-2 py-0.5 rounded-full border border-[#DCE5D9] shadow-xs">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#1B7A3F] animate-pulse"></span>
-                      {gpsAccuracy ? `±${gpsAccuracy}m` : 'Hardware GPS'}
+                      {gpsAccuracy ? `±${gpsAccuracy}m` : 'High-Precision GPS'}
                     </span>
                   </div>
                 </div>
@@ -329,8 +329,8 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
                   <ShieldCheck className="w-3.5 h-3.5 text-[#1B7A3F] shrink-0 mt-0.5" />
                   <span>
                     {lang === 'gu'
-                      ? 'છેડછાડ નિવારણ: ખોટા વિસ્તારની ફરિયાદ રોકવા માટે આ લોકેશન તમારા ઉપકરણના હાર્ડવેર જીપીએસ સાથે લૉક છે અને બદલી શકાશે નહીં.'
-                      : 'Fraud Prevention: Location coordinates are locked directly to your device hardware GPS to prevent false reporting in other areas.'}
+                      ? 'લોકેશન ચકાસણી: ચોક્કસ નગરપાલિકા રૂટિંગ માટે આ લોકેશન તમારા વર્તમાન GPS સાથે લૉક છે.'
+                      : 'Location Verification: GPS coordinates are automatically locked to your current position to ensure accurate municipal routing.'}
                   </span>
                 </div>
               </div>

@@ -98,6 +98,22 @@ export const SEED_WARDS: Ward[] = [
     escalationPhone: '+91 94260 88002',
   },
   {
+    id: 'ward_rural_vavdi',
+    name: 'Vavdi Gram Panchayat & Highway Cluster',
+    nameGu: 'વાવડી ગ્રામ પંચાયત અને હાઇવે ક્લસ્ટર',
+    code: 'GP-VAVDI',
+    type: 'rural',
+    center: { lat: 22.7620, lng: 73.5850 },
+    radiusM: 3500,
+    routeId: 'route_panchmahal_rural',
+    inspectorId: 'staff_talati_03',
+    inspectorName: 'H. P. Patel (Talati-cum-Mantri)',
+    inspectorPhone: '+91 94260 55003',
+    escalationTo: 'staff_tdo_godhra',
+    escalationName: 'Shri M. K. Solanki (TDO Godhra)',
+    escalationPhone: '+91 94260 88002',
+  },
+  {
     id: 'ward_rural_tuwa',
     name: 'Tuwa Gram Panchayat & Kund Area',
     nameGu: 'ટુવા ગ્રામ પંચાયત કુંડ વિસ્તાર',
@@ -130,8 +146,8 @@ export const SEED_ROUTES: Route[] = [
   },
   {
     id: 'route_panchmahal_rural',
-    name: 'Panchmahal Gram Swachhata Circuit (Bhamaiya -> Tuwa)',
-    wardIds: ['ward_rural_bhamaiya', 'ward_rural_tuwa'],
+    name: 'Panchmahal Gram Swachhata Circuit (Bhamaiya -> Tuwa -> Vavdi)',
+    wardIds: ['ward_rural_bhamaiya', 'ward_rural_tuwa', 'ward_rural_vavdi'],
     scheduledStartTime: '08:30',
   }
 ];
@@ -211,7 +227,7 @@ export const SEED_STAFF: Staff[] = [
     authUid: 'uid_tdo_01',
     name: 'Shri M. K. Solanki (TDO Godhra)',
     role: 'tdo',
-    wardIds: ['ward_rural_bhamaiya', 'ward_rural_tuwa'],
+    wardIds: ['ward_rural_bhamaiya', 'ward_rural_tuwa', 'ward_rural_vavdi'],
     talukaId: 'godhra',
     phone: '+91 94260 88002',
   },
