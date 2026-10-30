@@ -130,6 +130,30 @@ export class StorageService {
     window.dispatchEvent(new CustomEvent('safai_sathi_new_complaint', { detail: complaint }));
   }
 
+  /**
+   * Save a complaint locally when an update is received from the Firestore snapshot listener.
+   * Does NOT trigger a write back to cloud, avoiding unauthorized loop or overwriting staff actions.
+   */
+  static saveComplaintLocally(complaint: Complaint): void {
+    const complaints = this.getComplaints();
+    const existingIndex = complaints.findIndex(c => c.id === complaint.id);
+    
+    // Remote snapshot updates are by definition confirmed in sync with cloud
+    const updatedComplaint: Complaint = {
+      ...(existingIndex >= 0 ? complaints[existingIndex] : {}),
+      ...complaint,
+      syncStatus: 'synced',
+    };
+
+    if (existingIndex >= 0) {
+      complaints[existingIndex] = updatedComplaint;
+    } else {
+      complaints.unshift(updatedComplaint);
+    }
+    localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
+    window.dispatchEvent(new CustomEvent('safai_sathi_complaints_synced', { detail: complaints }));
+  }
+
   static updateComplaintSyncStatus(complaintId: string, syncStatus: 'synced' | 'pending_sync'): void {
     const complaints = this.getComplaints();
     const target = complaints.find(c => c.id === complaintId);
@@ -331,6 +355,8 @@ export class StorageService {
     }
     list.unshift(feedback);
     localStorage.setItem(STORAGE_KEYS.FEEDBACK, JSON.stringify(list));
+    // Asynchronously push collection feedback audit to Firestore
+    firebaseService.syncFeedbackToCloud(feedback).catch(() => {});
     window.dispatchEvent(new CustomEvent('safai_sathi_collection_updated', { detail: feedback }));
   }
 

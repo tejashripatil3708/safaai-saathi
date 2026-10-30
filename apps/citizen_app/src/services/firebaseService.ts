@@ -105,8 +105,12 @@ class FirebaseService {
     }
 
     try {
-      // Await verified authentication so deviceId == request.auth.uid passes firestore.rules
-      const authUid = await this.ensureAuth() || complaint.deviceId;
+      // Require verified authentication so deviceId == request.auth.uid passes firestore.rules
+      const authUid = await this.ensureAuth();
+      if (!authUid) {
+        console.warn(`🔒 Anonymous auth not established; deferring cloud sync for ticket ${complaint.ticketId}`);
+        return { success: false, cloudId: complaint.id };
+      }
       const docRef = doc(this.db, 'complaints', complaint.id);
       
       const firestorePayload = {
@@ -131,9 +135,11 @@ class FirebaseService {
   async syncFeedbackToCloud(feedback: CitizenCollectionFeedback): Promise<boolean> {
     if (!this.db || !this.isConfigured) return false;
     try {
-      const docId = `${feedback.date}_${feedback.wardId}_${feedback.deviceId.slice(0, 10)}`;
+      const authUid = await this.ensureAuth();
+      if (!authUid) return false;
+      const docId = `${feedback.date}_${feedback.wardId}_${authUid.slice(0, 10)}`;
       const docRef = doc(this.db, 'collectionFeedback', docId);
-      await setDoc(docRef, { ...feedback, serverReceivedAt: serverTimestamp() }, { merge: true });
+      await setDoc(docRef, { ...feedback, deviceId: authUid, serverReceivedAt: serverTimestamp() }, { merge: true });
       return true;
     } catch {
       return false;

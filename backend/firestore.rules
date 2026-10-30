@@ -61,8 +61,14 @@ service cloud.firestore {
         && request.resource.data.escalationLevel == 0
         && request.resource.data.deviceId == request.auth.uid;
         
-      // Only staff can update status, assignment, and escalation
-      allow update: if isStaff();
+      // Citizens can confirm/dispute resolution on their own ticket; staff can update any fields
+      allow update: if isStaff() || (
+        isAuthenticated()
+        && resource.data.deviceId == request.auth.uid
+        && request.resource.data.deviceId == resource.data.deviceId
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'citizenVerifiedStatus', 'citizenVerifiedAt', 'citizenRejectReason', 'citizenRejectPhotoUrl', 'resolvedPhotoUrl', 'resolvedNote', 'resolvedAt', 'reopenedAt', 'reopenPhotoUrl', 'reopenReason', 'note'])
+      );
       allow delete: if false;
     }
 
@@ -86,7 +92,9 @@ service cloud.firestore {
     // 8. Collection Feedback: Post-collection verification audits from citizens
     match /collectionFeedback/{feedbackId} {
       allow read: if isStaff();
-      allow create, update: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.deviceId == request.auth.uid;
+      allow update: if isStaff();
+      allow delete: if false;
     }
   }
 }

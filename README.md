@@ -71,7 +71,7 @@ flowchart TD
 Safaai Saathi is a civic-tech sanitation monitoring platform built specifically for Panchmahal district, covering urban Godhra Nagarpalika wards and rural Gram Panchayats (such as Bhamaiya, Tuwa, and Vavdi). 
 
 The platform connects three core pillars under a unified real-time data contract:
-1. **Citizen App (PWA & Android Native APK)**: Citizen reporting with tamper-proof GPS, live garbage van tracking, dynamic ETA countdown, arrival sound alerts, and post-collection audit.
+1. **Citizen App (PWA & Android Native APK)**: Citizen reporting with high-precision auto-detected GPS, live garbage van tracking, dynamic ETA countdown, arrival sound alerts, and post-collection audit.
 2. **Workers App (Driver Telemetry)**: Shift start/end, live GPS telemetry broadcast, and route milestone tracking.
 3. **Admin Web Dashboard**: Multi-tier oversight for Ward Inspectors, Municipal Chief Officer, TDOs, and the DDO.
 
@@ -92,7 +92,7 @@ The platform connects three core pillars under a unified real-time data contract
 
 ## 🚀 Key Features Implemented in the Citizen App
 
-### 1. Tamper-Proof Auto-Detected GPS Coordinates (Anti-Fraud)
+### 1. High-Precision Auto-Detected GPS Coordinates (Anti-Fraud)
 - **Zero Address Manipulation**: Citizens cannot type or fake addresses in other wards or areas.
 - **Hardware GPS Querying**: Uses high-accuracy device telemetry (`navigator.geolocation.getCurrentPosition({ enableHighAccuracy: true })`).
 - **Locked Coordinates Card**: High-precision latitude and longitude (e.g., `22.77582° N, 73.61495° E`) are locked in a read-only telemetry card with a `🔒 LOCKED` badge, auto-mapped ward name, and accuracy radius indicator (`±4m`).
@@ -113,7 +113,7 @@ The platform connects three core pillars under a unified real-time data contract
 
 ### 5. Phone OTP Verification
 - Requires verified 10-digit Indian mobile number before ticket submission.
-- Zero local phone storage for privacy compliance. Supports Firebase Phone Auth with pre-configured demo verification code (`123456`) for hackathon judging reliability.
+- Mandatory 10-digit Indian mobile number stored with the ticket so municipal ward inspectors can contact the citizen for resolution verification. Evaluators can use demo verification code (`123456`).
 
 ### 6. WhatsApp Ticket Allotment & Updates (100% Free)
 - Generates official ticket IDs following the strict specification: `PMH-YYYYMMDD-NNNN`.
@@ -191,7 +191,33 @@ Open `apps/citizen_app/android` in Android Studio (or run `./gradlew assembleDeb
 
 ## 🏆 Demo Shortcuts for SFIC Hackathon Judges
 - **Live Van Movement**: The built-in simulation engine automatically moves Van `GJ-17-GA-1001` through the Godhra North corridor, updates speed and distance in real time, and triggers the arrival sound chime when approaching within 500m of the citizen's ward.
-- **Tamper-Proof GPS Report**: Tap the red center button **"Report Issue"** — notice the latitude/longitude telemetry is automatically resolved and strictly locked with the `🔒 LOCKED` badge.
+- **High-Precision Auto-Detected GPS Report**: Tap the red center button **"Report Issue"** — notice the latitude/longitude telemetry is automatically resolved and strictly locked with the `🔒 LOCKED` badge.
 - **OTP Verification**: Enter any 10-digit Indian phone number (e.g., `9876543210`) and use demo OTP `123456`.
 - **WhatsApp Share**: Tap "Open WhatsApp" after submitting a report to view the formatted ticket message with live tracking link.
 - **Escalation Demo**: View any complaint in "My Complaints" to observe the resolution SLA timeline and direct authority escalation contact buttons.
+
+---
+
+## 🧪 End-to-End Evaluation & Verification Guide for Reviewers
+
+Reviewers can verify the complete end-to-end operational lifecycle using the following reproducible flows:
+
+### 1. Offline Reporting & Resilient Cloud Sync
+1. Open the [Safaai Saathi Live PWA](https://tejashripatil3708.github.io/safaai-saathi/) or Android APK.
+2. Simulate loss of connectivity by toggling your device to **Airplane Mode** or setting DevTools Network to **Offline**.
+3. Tap **"Report Issue"**, capture a direct camera snapshot, select Ward/Category, and verify with phone OTP `123456`.
+4. The ticket is immediately generated with an official ID (`PMH-YYYYMMDD-NNNN`) and tagged with an amber **`⏳ Offline`** badge.
+5. Close and reload the tab/app while offline: the complaint remains safely persisted in durable local storage.
+6. Reconnect internet: The app detects network restoration via `window.addEventListener('online')` (and during app boot), authenticates anonymously via Firebase Auth (`ensureAuth()`), uploads the document to Cloud Firestore (`complaints` collection) satisfying `deviceId == request.auth.uid`, and dynamically updates the badge to **`☁️ Synced`**.
+
+### 2. Live Municipal Staff Status Sync (Bidirectional)
+1. Navigate to the **"My Complaints"** tab.
+2. The client establishes active real-time Firestore `onSnapshot` listeners for each tracked ticket.
+3. When municipal staff or ward inspectors update a ticket in Firestore (e.g. status transition from `received` → `assigned` → `pending_verification`), the citizen UI updates in real time without refreshing.
+4. Updates are saved locally via `StorageService.saveComplaintLocally()`, respecting Firestore role boundaries and preserving the verified `☁️ Synced` badge.
+
+### 3. Vavdi Rural Gram Panchayat Coverage
+1. Open the Ward Selector on the home banner or via Settings.
+2. Select **`GP-VAVDI` (Vavdi Gram Panchayat)**.
+3. Switch van tracker to Rural Route (`GJ-17-RB-3003`).
+4. Waypoints traverse the entire rural corridor: Bhamaiya (`22.7550, 73.5700`), Tuwa (`22.7900, 73.4800`), and Vavdi (`22.7620, 73.5850`).

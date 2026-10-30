@@ -37,7 +37,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
   const [description, setDescription] = useState('');
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
-  // Tamper-proof GPS auto-detection state
+  // High-accuracy GPS auto-detection state
   const [capturedLocation, setCapturedLocation] = useState<LocationCoords | null>(userLocation || null);
   const [detectedWard, setDetectedWard] = useState<Ward>(
     userLocation ? GeoService.findWardByLocation(userLocation) || currentWard : currentWard
@@ -149,7 +149,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
     const ticketId = GeoService.generateTicketId();
     const resolvedWard = detectedWard || GeoService.findWardByLocation(capturedLocation) || currentWard;
 
-    // Tamper-proof coordinates formatted address
+    // Auto-detected coordinates formatted address
     const coordsStr = `${capturedLocation.lat.toFixed(5)}° N, ${capturedLocation.lng.toFixed(5)}° E`;
     const formattedAddress = description.trim()
       ? `${resolvedWard.name} (${description.trim()}) • GPS: ${coordsStr}`
@@ -268,7 +268,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
               </div>
             )}
 
-            {/* 2. AUTO-DETECTED GPS COORDINATES (Strictly Locked / Tamper-Proof) */}
+            {/* 2. AUTO-DETECTED GPS COORDINATES (Strictly Locked / Read-Only) */}
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-[#14201A] uppercase tracking-wider flex items-center gap-1.5">
@@ -290,7 +290,7 @@ export const ReportProblemSheet: React.FC<ReportProblemSheetProps> = ({
                 </button>
               </div>
 
-              {/* Tamper-proof locked coordinate badge */}
+              {/* Auto-detected locked coordinate badge */}
               <div className="p-3.5 rounded-[22px] bg-[#EAF2E7]/80 border-2 border-[#1B7A3F]/30 shadow-inner flex flex-col gap-2 relative">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2.5">

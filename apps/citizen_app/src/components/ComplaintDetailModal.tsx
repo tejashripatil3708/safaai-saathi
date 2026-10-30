@@ -252,7 +252,7 @@ export const ComplaintDetailModal: React.FC<ComplaintDetailModalProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 font-bold text-xs text-[#1B7A3F] dark:text-[#6DB36F]">
                   <MapPin className="w-4 h-4 shrink-0" />
-                  <span>{lang === 'gu' ? 'ઓટો-ડિટેક્ટેડ GPS લોકેશન:' : 'GPS Location (Tamper-Proof):'}</span>
+                  <span>{lang === 'gu' ? 'ઓટો-ડિટેક્ટેડ GPS લોકેશન:' : 'GPS Location (Auto-Locked):'}</span>
                 </div>
                 <span className="text-[10px] font-black uppercase tracking-wider bg-[#1B7A3F] text-white px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
                   <span>🔒</span>

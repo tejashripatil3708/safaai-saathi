@@ -236,7 +236,7 @@ export const App: React.FC = () => {
             onOpenReport={() => setIsReportOpen(true)}
             onComplaintResolved={handleComplaintResolved}
             onComplaintUpdated={(updated) => {
-              StorageService.saveComplaint(updated);
+              StorageService.saveComplaintLocally(updated);
               setComplaints(StorageService.getComplaints());
             }}
           />
