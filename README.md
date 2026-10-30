@@ -219,5 +219,17 @@ Reviewers can verify the complete end-to-end operational lifecycle using the fol
 ### 3. Vavdi Rural Gram Panchayat Coverage
 1. Open the Ward Selector on the home banner or via Settings.
 2. Select **`GP-VAVDI` (Vavdi Gram Panchayat)**.
-3. Switch van tracker to Rural Route (`GJ-17-RB-3003`).
-4. Waypoints traverse the entire rural corridor: Bhamaiya (`22.7550, 73.5700`), Tuwa (`22.7900, 73.4800`), and Vavdi (`22.7620, 73.5850`).
+3. Switch van tracker to Rural Route (`GJ-17-GA-1003`).
+4. Waypoints traverse the entire rural corridor: Bhamaiya (`22.7550, 73.6300`), Vavdi (`22.7620, 73.5850`), and Tuwa (`22.7980, 73.5500`), strictly aligned with seed data and simulation engine waypoints.
+
+### 4. Post-Collection Audit & Resilient Feedback Queue
+1. Complete the post-collection verification prompt on the home screen (*"Was waste collected today from your household?"*).
+2. The audit response is saved locally with initial `pending_sync` state and pushed to Cloud Firestore (`collectionFeedback` collection).
+3. If submitted while offline, the audit record is safely retained in durable storage and automatically synchronized upon network reconnection or app boot via `StorageService.retryPendingSync()`.
+
+---
+
+## ⚙️ Cloud Configuration & Deployment
+- The GitHub Actions CI/CD deployment workflow explicitly passes `VITE_FIREBASE_*` configuration variables during the production build step.
+- Project defaults are documented in `apps/citizen_app/.env.example` and configured in `apps/citizen_app/.env.production`.
+- In test environments without live internet access or external credentials, the app gracefully operates in durable offline queue mode without blocking citizen interaction or UI responsiveness.

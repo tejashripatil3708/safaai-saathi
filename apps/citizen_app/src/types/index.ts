@@ -169,6 +169,7 @@ export interface CitizenCollectionFeedback {
   wardId: string;
   date: string;
   deviceId: string;
+  syncStatus?: 'synced' | 'pending_sync';
   hadGarbage: boolean;
   collectionStatus: 'collected' | 'missed_by_van' | 'no_garbage_today';
   reason?: string;

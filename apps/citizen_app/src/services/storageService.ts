@@ -165,19 +165,43 @@ export class StorageService {
   }
 
   static async retryPendingSync(): Promise<void> {
+    // 1. Retry pending complaints
     const complaints = this.getComplaints();
     const pending = complaints.filter(c => c.syncStatus === 'pending_sync');
-    if (pending.length === 0) return;
-
-    console.log(`🌐 Network restored: auto-syncing ${pending.length} pending offline tickets to Firestore...`);
-    for (const item of pending) {
-      const res = await firebaseService.syncComplaintToCloud(item);
-      if (res.success) {
-        item.syncStatus = 'synced';
+    if (pending.length > 0) {
+      console.log(`🌐 Network restored: auto-syncing ${pending.length} pending offline tickets to Firestore...`);
+      for (const item of pending) {
+        const res = await firebaseService.syncComplaintToCloud(item);
+        if (res.success) {
+          item.syncStatus = 'synced';
+        }
       }
+      localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
+      window.dispatchEvent(new CustomEvent('safai_sathi_complaints_synced', { detail: complaints }));
     }
-    localStorage.setItem(STORAGE_KEYS.COMPLAINTS, JSON.stringify(complaints));
-    window.dispatchEvent(new CustomEvent('safai_sathi_complaints_synced', { detail: complaints }));
+
+    // 2. Retry pending collection feedback audits
+    const feedbackData = localStorage.getItem(STORAGE_KEYS.FEEDBACK);
+    if (feedbackData) {
+      try {
+        const feedbackList: CitizenCollectionFeedback[] = JSON.parse(feedbackData);
+        const pendingFeedback = feedbackList.filter(f => f.syncStatus === 'pending_sync');
+        if (pendingFeedback.length > 0) {
+          console.log(`🌐 Network restored: auto-syncing ${pendingFeedback.length} pending collection audits to Firestore...`);
+          let anyUpdated = false;
+          for (const fb of pendingFeedback) {
+            const success = await firebaseService.syncFeedbackToCloud(fb);
+            if (success) {
+              fb.syncStatus = 'synced';
+              anyUpdated = true;
+            }
+          }
+          if (anyUpdated) {
+            localStorage.setItem(STORAGE_KEYS.FEEDBACK, JSON.stringify(feedbackList));
+          }
+        }
+      } catch {}
+    }
   }
 
   static markComplaintResolved(complaintId: string, resolvedPhotoUrl: string, resolvedNote?: string): void {
@@ -345,7 +369,7 @@ export class StorageService {
 
   static saveFeedback(feedback: CitizenCollectionFeedback): void {
     const data = localStorage.getItem(STORAGE_KEYS.FEEDBACK);
-    let list = [];
+    let list: CitizenCollectionFeedback[] = [];
     if (data) {
       try {
         list = JSON.parse(data);
@@ -353,11 +377,40 @@ export class StorageService {
         list = [];
       }
     }
+
+    // Default to pending_sync until Firestore confirms
+    if (!feedback.syncStatus) {
+      feedback.syncStatus = 'pending_sync';
+    }
+
     list.unshift(feedback);
     localStorage.setItem(STORAGE_KEYS.FEEDBACK, JSON.stringify(list));
+
     // Asynchronously push collection feedback audit to Firestore
-    firebaseService.syncFeedbackToCloud(feedback).catch(() => {});
+    firebaseService.syncFeedbackToCloud(feedback)
+      .then((success) => {
+        if (success) {
+          StorageService.updateFeedbackSyncStatus(feedback.id, 'synced');
+        }
+      })
+      .catch(() => {
+        // Retained as pending_sync in durable local storage
+      });
+
     window.dispatchEvent(new CustomEvent('safai_sathi_collection_updated', { detail: feedback }));
+  }
+
+  static updateFeedbackSyncStatus(feedbackId: string, syncStatus: 'synced' | 'pending_sync'): void {
+    const data = localStorage.getItem(STORAGE_KEYS.FEEDBACK);
+    if (!data) return;
+    try {
+      const list: CitizenCollectionFeedback[] = JSON.parse(data);
+      const target = list.find(f => f.id === feedbackId);
+      if (target && target.syncStatus !== syncStatus) {
+        target.syncStatus = syncStatus;
+        localStorage.setItem(STORAGE_KEYS.FEEDBACK, JSON.stringify(list));
+      }
+    } catch {}
   }
 
   static hasAnsweredFeedbackToday(wardId: string): boolean {
