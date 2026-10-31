@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: 'build-and-deploy'
@@ -73,9 +75,11 @@ jobs:
       - name: Deploy to GitHub Pages (gh-pages)
         uses: JamesIves/github-pages-deploy-action@v4
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           folder: apps/citizen_app/dist
           branch: gh-pages
           clean: true
+          force: true
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
