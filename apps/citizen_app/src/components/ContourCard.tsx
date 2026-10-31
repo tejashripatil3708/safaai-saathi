@@ -14,7 +14,7 @@ interface ContourCardProps {
   className?: string;
 }
 
-export const ContourCard: React.FC<ContourCardProps> = ({
+export const ContourCard: React.FC<ContourCardProps> = React.memo(({
   seed = 42,
   lines = 9,
   label,
@@ -144,4 +144,4 @@ export const ContourCard: React.FC<ContourCardProps> = ({
       {children && <div className="relative z-10 mt-2">{children}</div>}
     </div>
   );
-};
+});
