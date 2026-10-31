@@ -116,5 +116,11 @@ service cloud.firestore {
       allow update: if isStaff();
       allow delete: if false;
     }
+
+    // 9. WardDuty: Daily ward-level collection duty completion status
+    match /wardDuty/{dutyId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
   }
 }

@@ -554,3 +554,59 @@ export const verifyDriverPin = functions.https.onCall(async (data) => {
 
   return { token: customToken };
 });
+
+
+/**
+ * 12. getWardDutyStatus: Checks if the sanitation van's duty in a specific ward has concluded for today.
+ */
+export const getWardDutyStatus = functions.https.onCall(async (data, context) => {
+  const { wardId, date } = data;
+  if (!wardId) {
+    throw new functions.https.HttpsError('invalid-argument', 'wardId is required');
+  }
+  const todayKey = date || new Date().toISOString().split('T')[0];
+  const dutyDoc = await db.collection('wardDuty').doc(`${todayKey}_${wardId}`).get();
+  if (dutyDoc.exists) {
+    const d = dutyDoc.data()!;
+    return {
+      isDutyOver: Boolean(d.isDutyOver || d.status === 'completed'),
+      status: d.status || 'completed',
+      completedAt: d.completedAt || null,
+    };
+  }
+
+  // Also verify against active trips for today
+  const tripsSnap = await db.collection('trips')
+    .where('date', '==', todayKey)
+    .where('status', '==', 'completed')
+    .limit(1)
+    .get();
+
+  if (!tripsSnap.empty) {
+    return { isDutyOver: true, status: 'completed' };
+  }
+
+  return { isDutyOver: false, status: 'in_progress' };
+});
+
+/**
+ * 13. markWardDutyCompleted: Callable for Driver / Supervisor App to mark duty completed.
+ */
+export const markWardDutyCompleted = functions.https.onCall(async (data, context) => {
+  const { wardId, vanId, routeId } = data;
+  if (!wardId) {
+    throw new functions.https.HttpsError('invalid-argument', 'wardId is required');
+  }
+  const todayKey = new Date().toISOString().split('T')[0];
+  await db.collection('wardDuty').doc(`${todayKey}_${wardId}`).set({
+    wardId,
+    vanId: vanId || 'van_default',
+    routeId: routeId || 'route_default',
+    date: todayKey,
+    isDutyOver: true,
+    status: 'completed',
+    completedAt: new Date().toISOString(),
+  }, { merge: true });
+
+  return { success: true, wardId, status: 'completed', isDutyOver: true };
+});

@@ -57,14 +57,25 @@ export const MapShell: React.FC<MapShellProps> = ({
   // Fullscreen map mode state per user requirement
   const [isFullscreenMap, setIsFullscreenMap] = useState(false);
   const [isCollectedToday, setIsCollectedToday] = useState(StorageService.isGarbageCollectedToday(ward.id));
+  const [isDutyOver, setIsDutyOver] = useState(StorageService.isWardDutyOver(ward.id));
 
   useEffect(() => {
     setIsCollectedToday(StorageService.isGarbageCollectedToday(ward.id));
+    setIsDutyOver(StorageService.isWardDutyOver(ward.id));
+
     const handleCollectionUpdate = () => {
       setIsCollectedToday(StorageService.isGarbageCollectedToday(ward.id));
     };
+    const handleDutyUpdate = () => {
+      setIsDutyOver(StorageService.isWardDutyOver(ward.id));
+    };
+
     window.addEventListener('safai_sathi_collection_updated', handleCollectionUpdate);
-    return () => window.removeEventListener('safai_sathi_collection_updated', handleCollectionUpdate);
+    window.addEventListener('safai_sathi_ward_duty_updated', handleDutyUpdate);
+    return () => {
+      window.removeEventListener('safai_sathi_collection_updated', handleCollectionUpdate);
+      window.removeEventListener('safai_sathi_ward_duty_updated', handleDutyUpdate);
+    };
   }, [ward.id]);
 
   // Active van for this ward's route
@@ -327,7 +338,11 @@ export const MapShell: React.FC<MapShellProps> = ({
           <div className="flex items-center gap-2 pl-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#1B7A3F] animate-ping" />
             <span className="text-xs font-bold text-[#14201A]">
-              {isCollectedToday ? (lang === 'gu' ? '✅ કલેક્શન પૂર્ણ' : '✅ Waste Collection Done') : (isNear ? t.arrived : `${t.etaTitle}: ${etaMinutes} ${t.etaMinutes}`)}
+              {isCollectedToday
+                ? (lang === 'gu' ? '✅ કલેક્શન પૂર્ણ' : '✅ Waste Collection Done')
+                : isDutyOver
+                ? (lang === 'gu' ? '🏁 વાનની સેવા પૂર્ણ' : '🏁 Van Duty Completed')
+                : (isNear ? t.arrived : `${t.etaTitle}: ${etaMinutes} ${t.etaMinutes}`)}
             </span>
           </div>
           <button
@@ -354,23 +369,56 @@ export const MapShell: React.FC<MapShellProps> = ({
             </span>
           </button>
 
-          {/* Contour Card for Van ETA */}
+          {/* Contour Card for Van ETA & Duty Status */}
           <ContourCard
             seed={ward.id.length * 17}
-            label={t.etaTitle}
-            heroValue={isNear ? (lang === 'gu' ? 'નજીક છે' : 'Arrived') : etaMinutes}
-            heroUnit={isNear ? '' : t.etaMinutes}
+            label={isDutyOver ? (lang === 'gu' ? 'સેવા સંપન્ન' : 'Duty Completed') : t.etaTitle}
+            heroValue={
+              isDutyOver
+                ? (lang === 'gu' ? 'ડ્યૂટી પૂર્ણ' : 'Duty Over')
+                : isNear
+                ? (lang === 'gu' ? 'નજીક છે' : 'Arrived')
+                : etaMinutes
+            }
+            heroUnit={isDutyOver || isNear ? '' : t.etaMinutes}
             subtitle={
-              isNear
+              isDutyOver
+                ? (lang === 'gu'
+                    ? (isCollectedToday ? 'આ વિસ્તારમાં આજનું કલેક્શન નોંધાયેલ છે.' : 'આ વિસ્તારમાં વાનની ડ્યૂટી સંપન્ન થઈ છે. શું કચરો આપ્યો?')
+                    : (isCollectedToday ? 'Household collection recorded for today.' : 'Van collection duty in your ward is over for today. Did you hand over waste?'))
+                : isNear
                 ? t.arrived
                 : activeVan
                 ? `${activeVan.plateNo} • ${activeVan.driverName || 'Driver'} • ${(lang === 'gu' ? ward.nameGu : ward.name).split(' - ')[0]}`
                 : t.noVanOnRoute
             }
-            badge={activeVan ? activeVan.plateNo : 'ON ROUTE'}
-            onAction={onOpenPostCollection}
-            actionIcon={<Sparkles className="w-5 h-5 text-[#111A14]" />}
+            badge={isDutyOver ? 'DUTY COMPLETED' : (activeVan ? activeVan.plateNo : 'ON ROUTE')}
+            onAction={isDutyOver && !isCollectedToday ? onOpenPostCollection : undefined}
+            actionIcon={isDutyOver && !isCollectedToday ? <Sparkles className="w-5 h-5 text-[#111A14]" /> : undefined}
           />
+
+          {/* Conditional Post-Collection Audit Card (Shown ONLY once the van's duty in this ward is over!) */}
+          {isDutyOver && !isCollectedToday && (
+            <div className="mt-3 p-3.5 rounded-[22px] bg-[#E4F1DF] border border-[#1B7A3F]/30 flex items-center justify-between animate-in fade-in">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xl">🚛</span>
+                <div>
+                  <p className="text-xs font-bold text-[#1B7A3F]">
+                    {lang === 'gu' ? 'ડ્યૂટી પૂર્ણ: શું કચરો આપ્યો?' : 'Duty Over: Did you give waste?'}
+                  </p>
+                  <p className="text-[11px] text-[#566259]">
+                    {lang === 'gu' ? 'વાનની સેવા પૂર્ણ થઈ ગઈ છે. પુષ્ટિ કરો.' : 'Van duty ended. Tap to confirm if waste was collected.'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={onOpenPostCollection}
+                className="px-3.5 py-1.5 rounded-full bg-[#1B7A3F] text-white text-xs font-bold shadow-sm active:scale-95 transition"
+              >
+                {lang === 'gu' ? 'જવાબ આપો' : 'Confirm'}
+              </button>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex flex-col gap-2.5 mt-4">

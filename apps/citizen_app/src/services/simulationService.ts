@@ -1,3 +1,4 @@
+import { StorageService } from './storageService';
 import { Ward, Van } from '../types';
 import { SEED_WARDS, SEED_VANS } from '../core/seedData';
 import { CONSTANTS } from '../core/constants';
@@ -182,7 +183,9 @@ export class VanSimulationEngine {
   private static ruralIndex = 0;
   private static listeners: ((vans: Van[]) => void)[] = [];
   private static arrivalAlertListeners: ((wardId: string, van: Van) => void)[] = [];
+  private static dutyCompletedListeners: ((wardId: string, van: Van) => void)[] = [];
   private static alertedWards = new Set<string>();
+  private static completedWards = new Set<string>();
   private static timer: any = null;
 
   static startSimulation(intervalMs = 4000): void {
@@ -229,6 +232,37 @@ export class VanSimulationEngine {
         }
       }
 
+      // Check for ward duty completion transitions (only after van has finished serving ward)
+      const vanNorth = updatedVans.find(v => v.routeId === 'route_godhra_north') || updatedVans[0];
+      if (this.northIndex >= 3 && !this.isWardDutyOver('ward_godhra_01')) {
+        this.markWardDutyCompleted('ward_godhra_01', vanNorth);
+      }
+      if (this.northIndex >= 6 && !this.isWardDutyOver('ward_godhra_02')) {
+        this.markWardDutyCompleted('ward_godhra_02', vanNorth);
+      }
+      if (this.northIndex >= 8 && !this.isWardDutyOver('ward_godhra_03')) {
+        this.markWardDutyCompleted('ward_godhra_03', vanNorth);
+      }
+
+      const vanSouth = updatedVans.find(v => v.routeId === 'route_godhra_south') || updatedVans[1];
+      if (this.southIndex >= 4 && !this.isWardDutyOver('ward_godhra_04')) {
+        this.markWardDutyCompleted('ward_godhra_04', vanSouth);
+      }
+      if (this.southIndex >= 6 && !this.isWardDutyOver('ward_godhra_05')) {
+        this.markWardDutyCompleted('ward_godhra_05', vanSouth);
+      }
+
+      const vanRural = updatedVans.find(v => v.routeId === 'route_panchmahal_rural') || updatedVans[2];
+      if (this.ruralIndex >= 2 && !this.isWardDutyOver('ward_rural_bhamaiya')) {
+        this.markWardDutyCompleted('ward_rural_bhamaiya', vanRural);
+      }
+      if (this.ruralIndex >= 4 && !this.isWardDutyOver('ward_rural_vavdi')) {
+        this.markWardDutyCompleted('ward_rural_vavdi', vanRural);
+      }
+      if (this.ruralIndex >= 6 && !this.isWardDutyOver('ward_rural_tuwa')) {
+        this.markWardDutyCompleted('ward_rural_tuwa', vanRural);
+      }
+
       this.listeners.forEach(fn => fn(updatedVans));
     }, intervalMs);
   }
@@ -252,6 +286,44 @@ export class VanSimulationEngine {
     return () => {
       this.arrivalAlertListeners = this.arrivalAlertListeners.filter(l => l !== fn);
     };
+  }
+
+  static onDutyCompleted(fn: (wardId: string, van: Van) => void): () => void {
+    this.dutyCompletedListeners.push(fn);
+    return () => {
+      this.dutyCompletedListeners = this.dutyCompletedListeners.filter(l => l !== fn);
+    };
+  }
+
+  static isWardDutyOver(wardId: string): boolean {
+    if (typeof window !== 'undefined' && StorageService.isWardDutyOver(wardId)) {
+      return true;
+    }
+    return this.completedWards.has(wardId);
+  }
+
+  static markWardDutyCompleted(wardId: string, van?: Van): void {
+    if (this.completedWards.has(wardId)) return;
+    this.completedWards.add(wardId);
+    if (typeof window !== 'undefined') {
+      StorageService.setWardDutyOver(wardId, true);
+    }
+    const resolvedVan = van || SEED_VANS.find(v => {
+      const ward = SEED_WARDS.find(w => w.id === wardId);
+      return ward && v.routeId === ward.routeId;
+    }) || SEED_VANS[0];
+    this.notifyDutyCompleted(wardId, resolvedVan);
+  }
+
+  static resetWardDuty(wardId: string): void {
+    this.completedWards.delete(wardId);
+    if (typeof window !== 'undefined') {
+      StorageService.resetWardDutyOver(wardId);
+    }
+  }
+
+  private static notifyDutyCompleted(wardId: string, van: Van): void {
+    this.dutyCompletedListeners.forEach(fn => fn(wardId, van));
   }
 
   private static notifyArrival(wardId: string, van: Van): void {

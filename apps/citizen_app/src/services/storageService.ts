@@ -12,6 +12,7 @@ const STORAGE_KEYS = {
   COMPLAINTS: 'safai_sathi_my_complaints',
   MISSED_REPORTS: 'safai_sathi_missed_reports_by_date',
   FEEDBACK: 'safai_sathi_collection_feedback',
+  WARD_DUTY_OVER: 'safai_sathi_ward_duty_over_by_date',
 };
 
 export class StorageService {
@@ -353,6 +354,51 @@ export class StorageService {
     } catch {
       return false;
     }
+  }
+
+  static isWardDutyOver(wardId: string): boolean {
+    const today = this.getTodayKey();
+    const key = `${today}_${wardId}`;
+    const data = localStorage.getItem(STORAGE_KEYS.WARD_DUTY_OVER);
+    if (!data) return false;
+    try {
+      const records = JSON.parse(data);
+      return Boolean(records[key]);
+    } catch {
+      return false;
+    }
+  }
+
+  static setWardDutyOver(wardId: string, isOver: boolean = true): void {
+    const today = this.getTodayKey();
+    const key = `${today}_${wardId}`;
+    let records: Record<string, boolean> = {};
+    const data = localStorage.getItem(STORAGE_KEYS.WARD_DUTY_OVER);
+    if (data) {
+      try {
+        records = JSON.parse(data);
+      } catch {}
+    }
+    records[key] = isOver;
+    localStorage.setItem(STORAGE_KEYS.WARD_DUTY_OVER, JSON.stringify(records));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('safai_sathi_ward_duty_updated', { detail: { wardId, isOver } }));
+    }
+  }
+
+  static resetWardDutyOver(wardId: string): void {
+    const today = this.getTodayKey();
+    const key = `${today}_${wardId}`;
+    const data = localStorage.getItem(STORAGE_KEYS.WARD_DUTY_OVER);
+    if (!data) return;
+    try {
+      const records = JSON.parse(data);
+      delete records[key];
+      localStorage.setItem(STORAGE_KEYS.WARD_DUTY_OVER, JSON.stringify(records));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('safai_sathi_ward_duty_updated', { detail: { wardId, isOver: false } }));
+      }
+    } catch {}
   }
 
   static resetGarbageCollectedToday(wardId: string): void {

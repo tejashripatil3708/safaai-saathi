@@ -101,6 +101,7 @@ export const App: React.FC = () => {
       setVans(updatedVans);
     });
 
+    // 1. Van Arrival Alert: Informs citizen that collection has started in the ward
     const unsubArrival = VanSimulationEngine.onArrivalAlert((alertWardId, van) => {
       if (alertWardId === wardId) {
         setArrivalBanner({
@@ -110,18 +111,34 @@ export const App: React.FC = () => {
               ? `🚨 સફાઈ વાન (${van.plateNo}) તમારા વિસ્તારમાં પહોંચી ગઈ છે!`
               : `🚨 Sanitation Van (${van.plateNo}) has entered your area!`,
         });
+        // Note: Do NOT ask if waste was handed over in the beginning; duty is still active.
+      }
+    });
 
-        setTimeout(() => {
-          if (!StorageService.hasAnsweredFeedbackToday(wardId)) {
+    // 2. Van Duty Completed Alert: ONLY prompts citizen after van's duty in this ward is officially over
+    const unsubDuty = VanSimulationEngine.onDutyCompleted((completedWardId, van) => {
+      if (completedWardId === wardId) {
+        setArrivalBanner({
+          visible: true,
+          message:
+            lang === 'gu'
+              ? `🏁 સફાઈ વાન (${van.plateNo}) ની આજની કલેક્શન સેવા સંપન્ન થઈ છે.`
+              : `🏁 Sanitation Van (${van.plateNo}) has completed today's collection duty in your area.`,
+        });
+
+        // Trigger verification audit modal ONLY once duty has concluded
+        if (!StorageService.hasAnsweredFeedbackToday(wardId)) {
+          setTimeout(() => {
             setIsPostCollectionOpen(true);
-          }
-        }, 8000);
+          }, 1500);
+        }
       }
     });
 
     return () => {
       unsubVans();
       unsubArrival();
+      unsubDuty();
       VanSimulationEngine.stopSimulation();
     };
   }, [wardId, lang]);

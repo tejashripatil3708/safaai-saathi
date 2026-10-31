@@ -7,6 +7,7 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import {
   getFirestore,
   doc,
+  getDoc,
   setDoc,
   onSnapshot,
   Firestore,
@@ -171,6 +172,57 @@ class FirebaseService {
     } catch (err) {
       console.warn('Real-time ticket listener error:', err);
       return () => {};
+    }
+  }
+
+  /**
+   * Checks whether the sanitation van's duty in a specific ward has completed for today.
+   * Queries Firestore 'wardDuty' collection with fallback to client storage.
+   */
+  async checkWardDutyOver(wardId: string): Promise<boolean> {
+    const today = new Date().toISOString().split('T')[0];
+    if (this.db && this.isConfigured) {
+      try {
+        const docRef = doc(this.db, 'wardDuty', `${today}_${wardId}`);
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.isDutyOver === true || data.status === 'completed') {
+            return true;
+          }
+        }
+      } catch {
+        // Fallback to local storage in offline mode
+      }
+    }
+    const data = localStorage.getItem('safai_sathi_ward_duty_over_by_date');
+    if (data) {
+      try {
+        const records = JSON.parse(data);
+        return Boolean(records[`${today}_${wardId}`]);
+      } catch {}
+    }
+    return false;
+  }
+
+  /**
+   * Syncs ward duty completion status to Firestore collection 'wardDuty'
+   */
+  async syncWardDutyToCloud(wardId: string, isOver: boolean = true): Promise<boolean> {
+    if (!this.db || !this.isConfigured) return false;
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const docRef = doc(this.db, 'wardDuty', `${today}_${wardId}`);
+      await setDoc(docRef, {
+        wardId,
+        date: today,
+        isDutyOver: isOver,
+        status: isOver ? 'completed' : 'in_progress',
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+      return true;
+    } catch {
+      return false;
     }
   }
 

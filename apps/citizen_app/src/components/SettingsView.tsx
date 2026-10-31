@@ -27,6 +27,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const t = translations[lang];
 
   const [addressInput, setAddressInput] = useState(StorageService.getCitizenAddress());
+  const [demoDutyOver, setDemoDutyOver] = useState(StorageService.isWardDutyOver(currentWardId));
+
+  const toggleDemoDuty = () => {
+    const nextState = !demoDutyOver;
+    if (nextState) {
+      StorageService.setWardDutyOver(currentWardId, true);
+    } else {
+      StorageService.resetWardDutyOver(currentWardId);
+    }
+    setDemoDutyOver(nextState);
+  };
   const [addressSavedMsg, setAddressSavedMsg] = useState(false);
   const [gpsDetecting, setGpsDetecting] = useState(false);
 
@@ -297,6 +308,43 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             ? 'લાઇવ GPS, કેમેરા વૉટરમાર્ક અને ઑફલાઇન સંગ્રહ ઉપકરણ પર કાર્યરત છે. મૂલ્યાંકન સરળતા માટે OTP (123456) અને વાન માર્ગ સિમ્યુલેટેડ છે.'
             : 'Live GPS, camera watermarks, and offline storage run on-device. Evaluation OTP (123456) and van routes are simulated for reproducible hackathon judging.'}
         </p>
+      </div>
+
+      {/* 7. Van Duty & Collection Prompt Lifecycle Test */}
+      <div className="bg-[#F3F6F2] dark:bg-[#1A261F] p-4 rounded-[24px] border border-[#DCE5D9] dark:border-[#2A3B31] flex flex-col gap-2.5">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#566259] dark:text-[#9DB0A2]">
+            {lang === 'gu' ? 'વાન ડ્યૂટી સ્થિતિ (કલેક્શન ચકાસણી)' : 'Van Duty & Waste Prompt Testing'}
+          </span>
+          <span
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              demoDutyOver
+                ? 'bg-[#E4F1DF] text-[#1B7A3F] dark:bg-[#1F3A2A] dark:text-[#6DB36F]'
+                : 'bg-[#FFEBD9] text-[#B34A0B]'
+            }`}
+          >
+            {demoDutyOver
+              ? (lang === 'gu' ? 'ડ્યૂટી સંપન્ન (ઓડિટ સક્રિય)' : 'Duty Over (Prompt Active)')
+              : (lang === 'gu' ? 'ડ્યૂટી ચાલુ (પૂછપરછ છુપાયેલ)' : 'Duty In Progress (Prompt Hidden)')}
+          </span>
+        </div>
+        <p className="text-[11px] text-[#566259] dark:text-[#9DB0A2] leading-relaxed">
+          {lang === 'gu'
+            ? 'નિયમ મુજબ, જ્યાં સુધી વાનની ડ્યૂટી પૂર્ણ ન થાય ત્યાં સુધી કચરો આપ્યો કે નહીં તે પૂછવામાં આવતું નથી.'
+            : 'Per civic protocol, citizens are never prompted if they gave waste until the van has officially concluded its duty in this ward.'}
+        </p>
+        <button
+          onClick={toggleDemoDuty}
+          className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 active:scale-95 ${
+            demoDutyOver
+              ? 'bg-[#FFEBD9] hover:bg-[#FEDAC0] text-[#B34A0B]'
+              : 'bg-[#1B7A3F] hover:bg-[#156032] text-white shadow-sm'
+          }`}
+        >
+          {demoDutyOver
+            ? (lang === 'gu' ? '🔄 ડ્યૂટી ફરીથી ચાલુ કરો (પૂછપરછ છુપાવો)' : '🔄 Reset Van to Active Duty (Hide Prompt)')
+            : (lang === 'gu' ? '⚡ વાનની ડ્યૂટી સંપન્ન સિમ્યુલેટ કરો' : '⚡ Simulate Van Duty Completed (Show Prompt)')}
+        </button>
       </div>
     </div>
   );
